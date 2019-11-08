@@ -14,7 +14,7 @@ const defaultClassPositions = [[ 50,  50], [250,  50], [450,  50],
                                [ 50, 500], [250, 500], [450, 500]];
 
 const OLD_SERVER_URL = "http://localhost:8002/watson/app.js"; // Remove this later
-const SERVER_URL = "http://localhost:5000/hello";
+const SERVER_URL = "http://localhost:8003/process-input";
 
 const defaultUserResponse = "Sorry, I didn't get that, can you rephrase? :)";
 var numClasses = 0;
