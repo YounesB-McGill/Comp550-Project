@@ -48,13 +48,33 @@ def process_response_debug(user_input):
             if words[i] == 'create':
                 # strip punctuation
                 class_name = first_letter_uppercase(re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", words[i + 2])))
-                return json.dumps({
-                    "intents": [{"intent": 'create_class'}],
-                    "entities": [{"value": class_name}],
-                    "output": {"text": [f"I created a class called {class_name}."]}
-                })
+                return add_class(class_name)
 
-    return "Yolo"
+    if "has a" in message_text:
+        for i in range(len(words) - 2):
+            if words[i] == 'has':
+                class_name = first_letter_uppercase(words[i - 1])
+                attribute_name = re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", words[i + 2]))
+                return add_attribute(class_name, attribute_name)
+
+    return "Error"
+
+
+def add_class(class_name):
+    return json.dumps({
+        "intents": [{"intent": 'create_class'}],
+        "entities": [{"value": class_name}],
+        "output": {"text": [f"I created a class called {class_name}."]}
+    })
+
+
+def add_attribute(class_name, attribute_name):
+    return json.dumps({
+        "intents": [{"intent": 'add_attribute'}],
+        "entities": [{"value": class_name}, {"value": attribute_name}],
+        "output": [{"text": f"{class_name} now has the attribute {attribute_name}."}]
+    })
+
 
 
 def first_letter_uppercase(user_input):
