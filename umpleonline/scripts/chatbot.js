@@ -13,6 +13,8 @@ const defaultClassPositions = [[ 50,  50], [250,  50], [450,  50],
                                [ 50, 350], [250, 350], [450, 350],
                                [ 50, 500], [250, 500], [450, 500]];
 
+const OLD_SERVER_URL = "http://localhost:8002/watson/app.js"; // Remove this later
+const SERVER_URL = "http://localhost:5000/hello";
 
 const defaultUserResponse = "Sorry, I didn't get that, can you rephrase? :)";
 var numClasses = 0;
@@ -25,7 +27,7 @@ function addMessage() {
 
   document.getElementById('chathistory').innerHTML +=
     ('<div class="bubble usermsg">' + userInput + '</div>');
-  document.getElementById('userinput').value = ""
+  document.getElementById('userinput').value = "";
 
   callChatbot(userInput);
 
@@ -59,7 +61,7 @@ function updateModelLog() {
 }
 
 function updateUmpleCode() {
-  umpleCode = Page.getUmpleCode()
+  umpleCode = Page.getUmpleCode();
   console.log(umpleCode);
 }
 
@@ -73,7 +75,7 @@ function chatbotAction() {
     'create_inheritance': addInheritance,
     'create_association': addAssociation,
     'create_composition': addComposition,
-    'unknown': () => { chatbotReply(defaultUserResponse); }
+    'unknown': () => {}
   };
 
   action[intent]();
@@ -84,7 +86,7 @@ function callChatbot(userInput) {
   $(document).ready(function() {
     var jqueryXHR = $.ajax({
       type: 'POST',
-      url: 'http://localhost:8002/watson/app.js',
+      url: SERVER_URL,
       dataType: 'json',
       data: {
         'param': '0',
@@ -140,7 +142,7 @@ function addInheritance() {
   fixInheritanceUserResponse();
   const childClassName = firstLetterUppercase(jsonResponse.entities[0].value) || 'SubClass';
   const parentClassName = firstLetterUppercase(jsonResponse.entities[1].value) || 'SuperClass';
-  console.log('par:'+parentClassName)
+  console.log('par:'+parentClassName);
   var request = `action=addGeneralization&actionCode={"parentId": ${parentClassName}, "childId": ${childClassName}}`;
   Action.ajax(Action.directUpdateCommandCallback, request);
 }
@@ -200,7 +202,7 @@ function addComposition() {
       lines.splice(i+2, 0, `  1 <@>- * ${partClassName};`);
       done = true;
     }
-    umpleCode += lines[i] + '\n'
+    umpleCode += lines[i] + '\n';
   }
   
   Page.setUmpleCode(umpleCode);

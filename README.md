@@ -1,94 +1,23 @@
-# Umple Modelling Language
+# Comp550 Natural Language Processing Project
 
-### Build Status
-
-OS         | Linux  | OSX    | Windows  
-:--------- | ------ | ------ | -------- 
-**Status** | [![Travis-CI Build Status](https://travis-ci.org/umple/umple.svg?branch=master)](https://travis-ci.org/umple/umple) | [![Travis-CI Build Status](https://travis-ci.org/umple/umple.svg?branch=master)](https://travis-ci.org/umple/umple) | [![Windows Build status](https://ci.appveyor.com/api/projects/status/1yetvadynui7r8y6?svg=true)](https://ci.appveyor.com/project/vahdat-ab/umple/branch/master) 
-
+Fall 2019
+Younes Boubekeur, Trung Vuong Thien, Anmoljeet Gill
 
 ## Introduction
 
-This is the main project for various Umple subprojects and components.
+This project uses [Umple](http://umple.org/), developed at the University of Ottawa, as a modeling tool and API.
 
-Umple is a model-oriented programming technology, allowing developers to embed modelling concepts (e.g. UML associations, state machines), patterns, generation templates, and other abstractions in traditional code, and vice versa. It generates high quality code for Java, C++ and PhP, as well as diagrams, metrics and many other artifacts. It can be embeded in the above languages as well as embed them.
+## Setting up
+1. Clone this repo, and follow the steps [here](https://github.com/umple/Umple/wiki/SettingUpLocalUmpleOnlineWebServer), including doing the full build. It does take a few minutes to complete, but since we won't modify Umple itself this only needs to be done once.
 
-The project homepage is located at http://umple.org/
+2. In `build/`, run this command to build the UmpleOnline website:
 
-## Development
-Umple is developed in itself, guaranteeing robustness; the most recent version of the compiler must be used to compile itself. See the wiki for development setup.
+    ```bash
+    ant -DshouldPackageUmpleOnline=true -Dmyenv=local -f build.umple.xml packageUmpleonline
+    ```
 
-Development follows a model-driven, test-driven, agile, continuous-integration process. Umple is hosted currently on Github at http://code.umple.org. It was first released in 2007, and the master was on Google Code from 2011 to mid 2015.
-
-Umple has been largely developed as a research project at the University of Ottawa, Canada, by numerous PhD and masters students: many undergraduates from across Canada and the USA have also contributed through the UCOSP program. See the license file for the list of contributors.
-
-More details can be found as follows
-
-  * Umple home page: http://www.umple.org  - The master Umple page with a more comprehensive set of links
-  * Umple user manual: http://manual.umple.org  - Full documentation of all Umple features
-  * UmpleOnline: http://try.umple.org - Website for the GUI version of Umple (can also be run on your local machine using Docker)
-  * Download page: http://dl.umple.org    - Links to the latest official release and continuous builds (command-line, Eclipse, Docker)
-  * Live diagram of the metamodel: http://metamodel.umple.org
-  * Architecture: http://architecture.umple.org
-
-Umple is continuously tested and built at the University of Ottawa using CruiseControl; see http://cc.umple.org . It is also built on Travis CI (http://travis.umple.org/) and Appveyor (https://appveyor.com/).
- 
-### Project setup
-
-The umple project is split into many smaller subprojects; the folder hierarchy is explained below to better describe the structure.
-
-* build/
-  * Ant build scripts and related information including user manual raw data
-
-* cruise.umple/ *Umple compiler*
-  * See its own ReadMe.txt for further details
-  * See also UmpleTo* below for additional compiler components
-       
-* cruise.umple.eclipse/, cruise.umple.xtext.ui/ *Eclipse plugins*
-
-* cruise.umplificator *Converting outside code to Umple*
-  * cruise.umple.validator *Validates umple when umplifying*
-
-* cruise.umple.nebula *Infrastructure used for real-time C++*
-
-* dev-tools *Tooling for Umple developers*
-       
-* dist *Build produced items, only available after building*
-  * libs/ *Managed build dependencies that umple*.jar require to run* 
-  * cruise.umple/reference *User manual* 
-  * qa/ *Test reports* 
-  * umple.jar and umple.VERSION.jar  *Current command-line Compiler* 
-  * umpledocs.VERSION.jar *User manual generator*
-  * umplestats.VERSION.jar *Statistics generation*
-  * umplesync.VERSION.jar *UmpleOnline tool to to synchronize graphical form*
-  * umplerun.VERSION.jar *tool to drive input to an umple program*
-  * vml.VERSION.jar * Extension for variability modeling*
-
-* examples/ *Developer curated examples*
-* externalexamples/ *External projects that are used for testing*
-
-* ExternalTextEditorPlugins *Plugins for external editors, Notepad++, etc*
-
-* sandbox *Small test done before a build to make sure testing and compiling works*
-
-* testbed/, testbed_php/, testbed_ruby/ *Test suites for Java, Php and Ruby respectively*
-* UmpleToJava/ *Code generation for Java*
-* UmpleToPhp/ *Code generation for Php*
-* UmpleToRuby/ *Code generation for Ruby*
-* UmpleToRTCpp/ *Code generation for C++ *
-* UmpleToSDL/ *Code generation to convert Umple to SDL* (in early development)
-* UmpleToSql/ *Code generation SQL from Umple models*
-* UmpleToTemplate/ *Location for templates that could be common to subprojects*
-
-* umpleonline/ *The UmpleOnline web application*
-  * UmpleOnline allows generation of code from Umple directly in a web browser, and also editing of Umple both graphically and textually. Available at http://try.umple.org
-
- 
-* Umplificator/ *Reverse engineer code to Umple*
-* umplificatoronline/ *Online tool for converting code to Umple*
-
-* umpleUI/ *Projects for the UIGU tooling*
-  * Projects for generating a UI through UIGU from Umple. These need work to incorporate them into UmpleOnline
-        
-* umplewww/ *Core files from the Umple.org web pages*
-  * Includes items such as the user manual that are moved at build time into the appropriate place
+3. Install these pip packages:
+    ```bash
+    pip3 install -U flask
+    pip3 install -U flask-cors
+    ```
