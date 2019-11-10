@@ -21,3 +21,7 @@ This project uses [Umple](http://umple.org/), developed at the University of Ott
     pip3 install -U flask
     pip3 install -U flask-cors
     ```
+
+## Running the app
+Open two terminal windows. In the first, `./run_umple_online` and in the second, `./run_chatbot`.
+Go to [localhost:8001/umple.php](http://localhost:8001/umple.php) using your browser.
