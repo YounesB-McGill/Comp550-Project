@@ -44,7 +44,7 @@ src-gen-[Uu]mple[Tt][Ll]/
 .mtj.tmp/
 
 # Package Files #
-*.jar
+#*.jar
 *.war
 *.ear
 
