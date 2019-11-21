@@ -38,14 +38,16 @@ def process_response_debug(user_input):
     It is also used as a backup if we cannot process the user input, eg for functionality not yet implemented.
     This function assumes valid input.
     """
+
+    ADD_CLASS_WORDS = ["add", "create", "make"]
     
     print("Processing request in debug mode")
     message_text = user_input.lower()
     words = message_text.split(' ')
 
-    if 'create a' in message_text:  # supports a/an
+    if any(w in message_text for w in ADD_CLASS_WORDS):
         for i in range(len(words) - 2):
-            if words[i] == 'create':
+            if words[i] in ADD_CLASS_WORDS:
                 # strip punctuation
                 class_name = first_letter_uppercase(strip_punctuation(words[i + 2]))
                 return add_class(class_name)
