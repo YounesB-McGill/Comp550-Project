@@ -3,24 +3,26 @@ import json
 import re
 
 
+# this needs to move to wherever the add rule is defined
+ADD_WORDS = ["add", "create", "make"]
+
+
 def process_response_baseline(user_input):
     """
     Function used to reply with a baseline response based on the Socio model.
     This function assumes valid input.
     """
-
-    # this needs to move to wherever the add rule is defined
-    ADD_CLASS_WORDS = ["add", "create", "make"]
     
     print("Processing request in debug mode")
     message_text = user_input.lower()
 
-    # need to replace this with NLTK chunking
+    # Also need to do NLTK chunking
     words = message_text.split(' ')
 
-    if any(w in message_text for w in ADD_CLASS_WORDS):
+    # This logic is not always correct, eg "Add attribute in class."
+    if contains_one_of(message_text, ADD_WORDS):
         for i in range(len(words) - 2):
-            if words[i] in ADD_CLASS_WORDS:
+            if words[i] in ADD_WORDS:
                 # strip punctuation
                 class_name = first_letter_uppercase(strip_punctuation(words[i + 2]))
                 return add_class(class_name)
@@ -115,4 +117,11 @@ def first_letter_uppercase(user_input):
 
 def strip_punctuation(s):
     return re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", s))
+
+
+def contains_one_of(user_input, targets):
+    """
+    Return True if the input string contains any one of the targets.  
+    """
+    return any(w in user_input for w in targets)
 
