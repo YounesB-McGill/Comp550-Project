@@ -2,9 +2,13 @@
 import json
 import re
 
+from typing import Dict
+
 
 # this needs to move to wherever the add rule is defined
 ADD_WORDS = ["add", "create", "make"]
+CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
+HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
 
 
 def process_response_baseline(user_input):
@@ -18,6 +22,7 @@ def process_response_baseline(user_input):
 
     # Also need to do NLTK chunking
     words = message_text.split(' ')
+    detected_keywords = get_detected_keywords(message_text)
 
     # This logic is not always correct, eg "Add attribute in class."
     if contains_one_of(message_text, ADD_WORDS):
@@ -69,6 +74,26 @@ def process_response_baseline(user_input):
             pass #if words[]
 
     return "Error"
+
+
+def get_detected_keywords(user_input: str) -> Dict[str, str]:
+    """
+    Returns detected keywords used by Socio's rules.
+    """
+    user_input = user_input.lower()
+    result = {}
+
+    for w in ADD_WORDS:
+        if w in user_input:
+            result["ADD"] = w
+    for w in CONTAINS_WORDS:
+        if w in user_input:
+            result["CONTAIN"] = w
+    for w in HAVE_WORDS:
+        if w in user_input:
+            result["HAVE"] = w
+
+    return result
 
 
 def add_class(class_name):
