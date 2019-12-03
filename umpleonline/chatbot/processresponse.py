@@ -2,6 +2,7 @@
 import json
 import re
 
+from nltk import word_tokenize, ne_chunk, pos_tag
 from typing import Dict
 
 
@@ -42,7 +43,10 @@ def process_response_baseline(user_input):
 
 
 def handle_add_kw(message_text):
-    return process_response_fallback(message_text)
+    # try:
+    #     chunks = get_chunks(message_text)
+    # except:
+        return process_response_fallback(message_text)
 
 
 def handle_contain_kw(message_text):
@@ -51,6 +55,12 @@ def handle_contain_kw(message_text):
 
 def handle_have_kw(message_text):
     return process_response_fallback(message_text)
+
+
+def get_chunks(message_text):
+    single_words = ne_chunk(pos_tag(word_tokenize(message_text)))
+    print(single_words)
+    return single_words
 
 
 def process_response_fallback(user_input):

@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import nltk
+
 from processresponse import process_response_baseline
 
 from flask import Flask, escape, request
@@ -31,5 +33,12 @@ def process_user_input():
         pass
 
 
+def setup_deps():
+    nltk.download('averaged_perceptron_tagger')
+    nltk.download('maxent_ne_chunker')
+    nltk.download('words')
+
+
 if __name__ == "__main__":
+    setup_deps()
     app.run(debug=DEBUG_MODE, port=PORT_NUMBER)
