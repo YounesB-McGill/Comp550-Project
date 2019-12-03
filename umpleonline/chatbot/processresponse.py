@@ -21,8 +21,44 @@ def process_response_baseline(user_input):
     message_text = user_input.lower()
 
     # Also need to do NLTK chunking
-    words = message_text.split(' ')
+    #words = message_text.split(' ')
     detected_keywords = get_detected_keywords(message_text)
+
+    nk = len(detected_keywords)
+
+    if nk == 0:
+        return process_response_fallback(user_input)
+    elif nk == 1:
+        kw = list(detected_keywords.keys())[0]
+        if kw == "ADD":
+            return handle_add_kw(message_text)
+        elif kw == "CONTAIN":
+            return handle_contain_kw(message_text)
+        elif kw == "HAVE":
+            return handle_have_kw(message_text)
+    else:
+        # TODO Handle multiple keywords, eg "Students *contain*s a numeric *identif*ier"
+        pass
+
+
+def handle_add_kw(message_text):
+    return process_response_fallback(message_text)
+
+
+def handle_contain_kw(message_text):
+    return process_response_fallback(message_text)
+
+
+def handle_have_kw(message_text):
+    return process_response_fallback(message_text)
+
+
+def process_response_fallback(user_input):
+    """
+    Fallback method from Younes' undergrad project, to be used for the cases not handled by Socio's logic.
+    """
+    message_text = user_input.lower()
+    words = message_text.split(' ')
 
     # This logic is not always correct, eg "Add attribute in class."
     if contains_one_of(message_text, ADD_WORDS):
@@ -74,6 +110,7 @@ def process_response_baseline(user_input):
             pass #if words[]
 
     return "Error"
+
 
 
 def get_detected_keywords(user_input: str) -> Dict[str, str]:

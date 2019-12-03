@@ -376,9 +376,9 @@ function LargeScreenManager()
     this.minEditorSize = new UmplePosition(0,0,284,0);
 
     var maxEditorWidth = jQuery(window).innerWidth() - this.marginSpace 
-      - jQuery(paletteHandle).outerWidth() - this.minCanvasSize.width;
+      - jQuery(paletteHandle).outerWidth() - this.minCanvasSize.width - 305;
     var maxCanvasWidth = jQuery(window).innerWidth() - this.marginSpace
-      - jQuery(paletteHandle).outerWidth() - this.minEditorSize.width;
+      - jQuery(paletteHandle).outerWidth() - this.minEditorSize.width - 305;
     
     this.maxEditorSize = new UmplePosition(0, 0, maxEditorWidth, 0);
     this.maxCanvasSize = new UmplePosition(0, 0, maxCanvasWidth, 0);
@@ -395,7 +395,7 @@ function LargeScreenManager()
   this.initUmpleCanvasSize = function()
   {
     this.initCanvasResizable();
-    this.setUmpleCanvasSize(this.minCanvasSize.width)
+    this.setUmpleCanvasSize(this.minCanvasSize.width - 305)
   }
   
   //Initializes the text editor size and resizable properties
@@ -452,7 +452,7 @@ function LargeScreenManager()
     if (height < this.minCanvasSize.height) height = this.minCanvasSize.height;
     if (width > this.maxCanvasSize.width && Layout.isTextVisible) width = this.maxCanvasSize.width;
     
-    umpleCanvas.outerWidth(width);
+    umpleCanvas.outerWidth(width - 305);
     umpleCanvas.height(height);
     
     jQuery("#palette").accordion("refresh");
