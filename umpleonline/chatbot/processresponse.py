@@ -3,6 +3,8 @@ import json
 import re
 
 from nltk import word_tokenize, ne_chunk, pos_tag
+from nltk import RegexpParser
+from nltk.corpus import wordnet
 from typing import Dict
 
 
@@ -10,6 +12,11 @@ from typing import Dict
 ADD_WORDS = ["add", "create", "make"]
 CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
 HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
+NP_GRAMMAR = r"""
+    NP: {<DT|PP\$>?<JJ>*<NN>}
+        {<NNP>+}
+"""
+CP = RegexpParser(NP_GRAMMAR)
 
 
 def process_response_baseline(user_input):
@@ -57,10 +64,26 @@ def handle_have_kw(message_text):
     return process_response_fallback(message_text)
 
 
+"""
 def get_chunks(message_text):
     single_words = ne_chunk(pos_tag(word_tokenize(message_text)))
     print(single_words)
     return single_words
+"""
+
+def get_chunks(message_text):
+    tagged_sentence = pos_tag(word_tokenize(message_text))
+    res = CP.parse(tagged_sentence)
+    print(res)
+    return res
+
+
+def get_synonyms(word):
+    res = set()
+    for syn in wordnet.synsets(word):
+        for lm in syn.lemmas():
+            res.add(lm.name())
+    return res
 
 
 def process_response_fallback(user_input):
