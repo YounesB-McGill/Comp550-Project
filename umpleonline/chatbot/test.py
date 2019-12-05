@@ -6,12 +6,16 @@ Run these unit tests by running `pytest test.py` in the umpleonline/chatbot dire
 
 import nltk
 
+from itertools import chain
+
 from processresponse import process_response_baseline, get_detected_keywords, get_chunks
 
 ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age in person.", "Create a school."]
 CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]
 HAVE_EXAMPLE_SENTENCES = ["Bulky packages are characterized by their width, length and height.",
 	"Students have a numeric identifier.", "Medicines have an active ingredient."]
+
+ALL_SENTENCES = chain(ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES)
 
 
 def test_get_detected_keywords():
@@ -27,7 +31,7 @@ def test_get_detected_keywords():
 
 
 def test_get_chunks():
-    for s in ADD_EXAMPLE_SENTENCES:
+    for s in ALL_SENTENCES:
         print(get_chunks(s))
 
 

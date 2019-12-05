@@ -64,17 +64,10 @@ def handle_have_kw(message_text):
     return process_response_fallback(message_text)
 
 
-"""
-def get_chunks(message_text):
-    single_words = ne_chunk(pos_tag(word_tokenize(message_text)))
-    print(single_words)
-    return single_words
-"""
-
 def get_chunks(message_text):
     tagged_sentence = pos_tag(word_tokenize(message_text))
     res = CP.parse(tagged_sentence)
-    print(res)
+    #print(res)
     return res
 
 
