@@ -173,8 +173,23 @@ def datagen(operation, raw_grammar):
     print('---------------------------------------------------------------')
 
 
+def csv_gen(operation, raw_grammar):
+    '''Create the same data as above, but in csv format'''
+    output_file = f'{operation}.csv'
+
+    grammar = CFG.fromstring(raw_grammar)
+    all_sentences = [' '.join(sentence) for sentence in generate(grammar)]
+    sentences = random.sample(all_sentences, min(len(all_sentences), NUMBER_OF_SENTENCES))
+
+    with open(output_file, 'w') as fd:
+        fd.writelines(f',{operation}\n'.join(sentences))
+    print(f'Output for operation {operation} written to {output_file}')
+    print('---------------------------------------------------------------')
+
+
 if __name__ == '__main__':
     init_glob()
     for key, value in GRAMMARS.items():
         datagen(key, value)
+        csv_gen(key, value)
 
