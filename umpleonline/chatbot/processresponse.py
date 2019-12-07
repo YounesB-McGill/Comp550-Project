@@ -55,10 +55,21 @@ def process_response_baseline(user_input: str) -> str:
 
 
 def handle_add_kw(message_text: str) -> str:
-    # try:
-    #     chunks = get_chunks(message_text)
-    # except:
-        return process_response_fallback(message_text)
+    try:
+        chunks = get_chunks(message_text)
+    except:
+        chunks = get_chunks_fallback(message_text)
+    """
+    Old logic:
+    for i in range(len(words) - 2):
+        if words[i] in ADD_WORDS:
+            # strip punctuation
+            class_name = first_letter_uppercase(strip_punctuation(words[i + 2]))
+            return add_class(class_name)
+    """
+    # nps = get_NP_subtrees(chunks)
+    
+    # if
 
 
 def handle_contain_kw(message_text: str) -> str:
@@ -70,9 +81,20 @@ def handle_have_kw(message_text: str) -> str:
 
 
 def get_chunks(message_text: str) -> Tree:
+    """
+    Return the parse given by the Stanford CoreNLP parser.
+    """
     parse_list = parser.parse(message_text.split())
     for tree in parse_list:
         return tree
+
+
+def get_chunks_fallback(message_text: str) -> Tree:
+    """
+    Return the default NLTK parse of a sentence. Used as a backup when the more accurate Stanford NLP server is not running.
+    """
+    tagged_sentence = pos_tag(word_tokenize(message_text))
+    return CP.parse(tagged_sentence)
 
 
 def get_NP_subtrees(tree: Tree) -> List[Tree]:
