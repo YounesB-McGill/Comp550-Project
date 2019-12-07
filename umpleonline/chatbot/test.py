@@ -44,7 +44,11 @@ def test_serialized_parse_trees():
 
 
 def test_get_NP_subtrees():
-    get_NP_subtrees(Tree.fromstring(PARSE_TREES[0]))
+    for s in PARSE_TREES:
+        np_subtrees = get_NP_subtrees(Tree.fromstring(s))
+        for t in np_subtrees:
+            assert t.label() == "NP"
+            print(t)
 
 
 def setup_deps():

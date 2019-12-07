@@ -24,7 +24,7 @@ CP = RegexpParser(NP_GRAMMAR)
 parser = CoreNLPParser(url='http://localhost:9000')
 
 
-def process_response_baseline(user_input):
+def process_response_baseline(user_input: str) -> str:
     """
     Function used to reply with a baseline response based on the Socio model.
     This function assumes valid input.
@@ -54,18 +54,18 @@ def process_response_baseline(user_input):
         pass
 
 
-def handle_add_kw(message_text):
+def handle_add_kw(message_text: str) -> str:
     # try:
     #     chunks = get_chunks(message_text)
     # except:
         return process_response_fallback(message_text)
 
 
-def handle_contain_kw(message_text):
+def handle_contain_kw(message_text: str) -> str:
     return process_response_fallback(message_text)
 
 
-def handle_have_kw(message_text):
+def handle_have_kw(message_text: str) -> str:
     return process_response_fallback(message_text)
 
 
@@ -76,26 +76,13 @@ def get_chunks(message_text: str) -> Tree:
 
 
 def get_NP_subtrees(tree: Tree) -> List[Tree]:
-    """
-    Work in progress
-    def helper(tree: Tree, result: List[Tree]) -> List[Tree]:
-        print("tree: ", tree, "\nres:  ", result)
-        for t in tree.subtrees():
-            if t.label() == "NP" and t not in result:
-                result.append(t)
-            if type(t) == Tree and t != tree:
-                #pass
-                result.extend(helper(t, result))  # recursively search for NP's
-        #print("result so far: ", result)
-        return result
-    
     result = []
-    return helper(tree, result)
-    """
+    for t in tree.subtrees(lambda t: t.label() == "NP"):
+        result.append(t)
+    return result
 
 
-
-def get_synonyms(word):
+def get_synonyms(word: str) -> set:
     res = set()
     for syn in wordnet.synsets(word):
         for lm in syn.lemmas():
@@ -103,7 +90,7 @@ def get_synonyms(word):
     return res
 
 
-def process_response_fallback(user_input):
+def process_response_fallback(user_input: str) -> str:
     """
     Fallback method from Younes' undergrad project, to be used for the cases not handled by Socio's logic.
     """
@@ -183,7 +170,7 @@ def get_detected_keywords(user_input: str) -> Dict[str, str]:
     return result
 
 
-def add_class(class_name):
+def add_class(class_name: str) -> str:
     return json.dumps({
         "intents": [{"intent": "create_class"}],
         "entities": [{"value": class_name}],
@@ -191,7 +178,7 @@ def add_class(class_name):
     })
 
 
-def add_attribute(class_name, attribute_name):
+def add_attribute(class_name: str, attribute_name: str) -> str:
     return json.dumps({
         "intents": [{"intent": "add_attribute"}],
         "entities": [{"value": class_name}, {"value": attribute_name}],
@@ -199,7 +186,7 @@ def add_attribute(class_name, attribute_name):
     })
 
 
-def create_composition(whole_class_name, part_class_name):
+def create_composition(whole_class_name: str, part_class_name: str) -> str:
     return json.dumps({
         "intents": [{"intent": "create_composition"}],
         "entities": [{"value": whole_class_name}, {"value": part_class_name}],
@@ -208,7 +195,7 @@ def create_composition(whole_class_name, part_class_name):
     })
 
 
-def create_association(class_name1, class_name2):
+def create_association(class_name1: str, class_name2: str) -> str:
     return json.dumps({
         "intents": [{"intent": "create_association"}],
         "entities": [{"value": class_name1}, {"value": class_name2}],
@@ -216,22 +203,22 @@ def create_association(class_name1, class_name2):
     })
 
 
-def create_inheritance(child, parent):
+def create_inheritance(child: str, parent: str) -> str:
     return json.dumps({
         "intents": [{"intent": "create_inheritance"}],
         "entities": [{"value": child}, {"value": parent}],
         "output": {"text": [f"{child} is a subclass of {parent}."]}
     })
 
-def first_letter_uppercase(user_input):
+def first_letter_uppercase(user_input: str) -> str:
     return user_input[0].upper() + user_input[1:]
 
 
-def strip_punctuation(s):
+def strip_punctuation(s: str) -> str:
     return re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", s))
 
 
-def contains_one_of(user_input, targets):
+def contains_one_of(user_input: str, targets: str) -> bool:
     """
     Return True if the input string contains any one of the targets.  
     """
