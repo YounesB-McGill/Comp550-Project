@@ -6,16 +6,10 @@ Run these unit tests by running `pytest test.py` in the umpleonline/chatbot dire
 
 import nltk
 
+from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
 from itertools import chain
-
-from processresponse import process_response_baseline, get_detected_keywords, get_chunks
-
-ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age in person.", "Create a school."]
-CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]
-HAVE_EXAMPLE_SENTENCES = ["Bulky packages are characterized by their width, length and height.",
-	"Students have a numeric identifier.", "Medicines have an active ingredient."]
-
-ALL_SENTENCES = chain(ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES)
+from nltk.tree import Tree
+from processresponse import process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees
 
 
 def test_get_detected_keywords():
@@ -32,7 +26,25 @@ def test_get_detected_keywords():
 
 def test_get_chunks():
     for s in ALL_SENTENCES:
-        print(get_chunks(s))
+        c = get_chunks(s)
+        assert type(c) == nltk.tree.Tree
+        print(c)
+        c.pretty_print()
+
+
+def test_serialized_parse_trees():
+    """
+    Same as above test, but does not require the Stanford NLP server to run, which saves memory.
+    """
+    for s in PARSE_TREES:
+        tree = Tree.fromstring(s)
+        assert type(tree) == nltk.tree.Tree
+        print(tree)
+        tree.pretty_print()
+
+
+def test_get_NP_subtrees():
+    get_NP_subtrees(Tree.fromstring(PARSE_TREES[0]))
 
 
 def setup_deps():
@@ -43,7 +55,10 @@ def setup_deps():
 
 def test():
     #test_get_detected_keywords()
-    test_get_chunks()
+    #test_get_chunks()
+    #test_serialized_parse_trees()
+    test_get_NP_subtrees()
+
 
 
 if __name__ == "__main__":

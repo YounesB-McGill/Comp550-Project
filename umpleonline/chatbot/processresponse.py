@@ -5,7 +5,10 @@ import re
 from nltk import word_tokenize, ne_chunk, pos_tag
 from nltk import RegexpParser
 from nltk.corpus import wordnet
-from typing import Dict
+from nltk.parse import CoreNLPParser
+from nltk.tree import Tree
+from nltk.util import breadth_first
+from typing import Dict, List
 
 
 # this needs to move to wherever the add rule is defined
@@ -17,6 +20,8 @@ NP_GRAMMAR = r"""
         {<NNP>+}
 """
 CP = RegexpParser(NP_GRAMMAR)
+
+parser = CoreNLPParser(url='http://localhost:9000')
 
 
 def process_response_baseline(user_input):
@@ -64,11 +69,30 @@ def handle_have_kw(message_text):
     return process_response_fallback(message_text)
 
 
-def get_chunks(message_text):
-    tagged_sentence = pos_tag(word_tokenize(message_text))
-    res = CP.parse(tagged_sentence)
-    #print(res)
-    return res
+def get_chunks(message_text: str) -> Tree:
+    parse_list = parser.parse(message_text.split())
+    for tree in parse_list:
+        return tree
+
+
+def get_NP_subtrees(tree: Tree) -> List[Tree]:
+    """
+    Work in progress
+    def helper(tree: Tree, result: List[Tree]) -> List[Tree]:
+        print("tree: ", tree, "\nres:  ", result)
+        for t in tree.subtrees():
+            if t.label() == "NP" and t not in result:
+                result.append(t)
+            if type(t) == Tree and t != tree:
+                #pass
+                result.extend(helper(t, result))  # recursively search for NP's
+        #print("result so far: ", result)
+        return result
+    
+    result = []
+    return helper(tree, result)
+    """
+
 
 
 def get_synonyms(word):
