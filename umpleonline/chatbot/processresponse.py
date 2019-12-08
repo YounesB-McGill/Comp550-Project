@@ -55,10 +55,7 @@ def process_response_baseline(user_input: str) -> str:
 
 
 def handle_add_kw(message_text: str) -> str:
-    try:
-        chunks = get_chunks(message_text)
-    except:
-        chunks = get_chunks_fallback(message_text)
+    chunks = get_chunks(message_text)
     """
     Old logic:
     for i in range(len(words) - 2):
@@ -68,7 +65,7 @@ def handle_add_kw(message_text: str) -> str:
             return add_class(class_name)
     """
     nps = get_NP_subtrees(chunks)
-    n_st = len(nps)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
     if n_st == 0:
         kw = get_detected_keywords(message_text).get("ADD", "add")
         return return_error_to_user(f"Please specify what you want to {kw}.")
@@ -90,9 +87,14 @@ def get_chunks(message_text: str) -> Tree:
     """
     Return the parse given by the Stanford CoreNLP parser.
     """
-    parse_list = parser.parse(message_text.split())
-    for tree in parse_list:
-        return tree
+    try:
+        parse_list = parser.parse(message_text.split())
+        for tree in parse_list:
+            return tree
+    except Exception as e:
+        print("The following exception occurred when attempting to connect to the Stanford NLP server:\n", e)
+        print("\nReturning the default NLTK parse of a sentence instead.")
+        return get_chunks_fallback(message_text)
 
 
 def get_chunks_fallback(message_text: str) -> Tree:
@@ -110,12 +112,40 @@ def get_NP_subtrees(tree: Tree) -> List[Tree]:
     return result
 
 
+def get_num_nonnested_NP_subtrees(tree: Tree) -> int:
+    result = 0
+
+    for t in tree.subtrees(lambda t: t.label() == "NP"):
+        result += 1
+
+        n_NP_subtrees = 0
+        for j, st in enumerate(t.subtrees(lambda t: t.label() == "NP")):
+            if j == 0:
+                continue
+
+            n_NP_subsubtrees = 0
+            for k, sst in enumerate(st.subtrees(lambda t: t.label() == "NP")):
+                if k == 0:
+                    continue
+                n_NP_subsubtrees += 1
+            
+            if n_NP_subsubtrees in [1, 2]:
+                result -= 1
+
+            n_NP_subtrees += 1
+
+        if n_NP_subtrees in [1, 2]:
+            result -= 1
+
+    return result
+
+
 def get_noun_from_np(np_tree: Tree) -> str:
     result = ""
 
     for subtree in np_tree.subtrees():
         if type(subtree[0]) == str:
-            if subtree.label() in ["DT", "PRP", "PRP$"]:
+            if subtree.label() in ["DT", "PRP", "PRP$", ","]:
                 continue
             if subtree.label() == "NNS" and inflect.singular_noun(subtree[0]):
                 result += first_letter_uppercase(inflect.singular_noun(subtree[0]))

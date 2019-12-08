@@ -11,6 +11,7 @@ numpy = "*"
 flask = "*"
 flask-cors = "*"
 inflect = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.7"

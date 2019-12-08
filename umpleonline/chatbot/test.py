@@ -9,7 +9,8 @@ import nltk
 from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
 from itertools import chain
 from nltk.tree import Tree
-from processresponse import process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees, get_noun_from_np
+from processresponse import (process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees,
+    get_noun_from_np, get_num_nonnested_NP_subtrees)
 
 
 def test_get_detected_keywords():
@@ -78,6 +79,40 @@ def test_get_noun_from_np():
     validate("Score", "(NP (PRP$ their) (NNS scores))")
 
     validate("PoliceInformationSystem", "(NP (DT The) (NN police) (NN information) (NN system))")
+    validate("TeleportActionCard", "(NP (DT a) (NN teleport) (NN action) (NN card))")
+    validate("LoseTurnActionCard", "(NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))")
+
+
+def test_get_num_nonnested_NP_subtrees():
+    def validate(expected, actual):
+        assert expected == get_num_nonnested_NP_subtrees(Tree.fromstring(actual))
+
+    totree = lambda user_input: str(get_chunks(user_input))
+
+    validate(1, "(NP (NNS tomatoes))")
+    validate(1, "(NP (DT a) (JJ specific) (NN flight))")
+    validate(1, "(NP (DT a) (NN teleport) (NN action) (NN card))")
+    validate(1, "(NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))")
+    
+    validate(2, """(S (NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))
+                   (CC and)
+                   (NP (DT a) (NN teleport) (NN action) (NN card)))""")
+
+    validate(2, """(NP (NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))
+                   (CC and)
+                   (NP (DT a) (NN teleport) (NN action) (NN card)))""")
+
+    validate(1, totree("Add a school."))
+    validate(1, totree("Create a television."))
+    validate(2, totree("Add work in person."))
+    validate(2, totree("Add numeric age in person."))
+
+    validate(2, totree("The house is made of rooms."))
+    validate(2, totree("Students contains a numeric identifier."))
+
+    validate(4, totree("Bulky packages are characterized by their width, length and height."))
+    validate(2, totree("Students have a numeric identifier."))
+    validate(2, totree("Medicines have an active ingredient."))
 
 
 def setup_deps():
@@ -91,7 +126,8 @@ def test():
     #test_get_chunks()
     #test_serialized_parse_trees()
     #test_get_NP_subtrees()
-    test_get_noun_from_np()
+    #test_get_noun_from_np()
+    test_get_num_nonnested_NP_subtrees()
 
 
 if __name__ == "__main__":
