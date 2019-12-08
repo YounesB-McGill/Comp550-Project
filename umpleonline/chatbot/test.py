@@ -10,7 +10,8 @@ from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE
 from itertools import chain
 from nltk.tree import Tree
 from processresponse import (process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees,
-    get_noun_from_np, get_num_nonnested_NP_subtrees)
+    get_noun_from_np, get_num_nonnested_NP_subtrees, handle_add_kw, handle_contain_kw, handle_have_kw,
+    add_class, add_attribute, create_composition, create_association, create_inheritance, return_error_to_user)
 
 
 def test_get_detected_keywords():
@@ -114,6 +115,23 @@ def test_get_num_nonnested_NP_subtrees():
     validate(2, totree("Students have a numeric identifier."))
     validate(2, totree("Medicines have an active ingredient."))
 
+    validate(0, totree("add."))
+    validate(0, totree("create."))
+    validate(0, totree("make."))
+
+
+def test_handle_add_kw():
+    def validate(expected, actual):
+        assert expected == handle_add_kw(actual)
+
+    validate(add_class("School"), "create a school")
+    validate(add_class("PlayingCard"), "create a playing card")
+    validate(add_class("LoseTurnActionCard"), "make a lose turn action card")
+    validate(add_class("Alumnus"), "create an alumni")
+    
+    validate(add_attribute("Person", "work"), "Add work in person.")
+    validate(add_attribute("Person", "numericAge"), "Add numeric age in person.")
+
 
 def setup_deps():
     nltk.download('averaged_perceptron_tagger')
@@ -127,7 +145,8 @@ def test():
     #test_serialized_parse_trees()
     #test_get_NP_subtrees()
     #test_get_noun_from_np()
-    test_get_num_nonnested_NP_subtrees()
+    #test_get_num_nonnested_NP_subtrees()
+    test_handle_add_kw()
 
 
 if __name__ == "__main__":

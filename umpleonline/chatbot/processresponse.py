@@ -31,16 +31,12 @@ def process_response_baseline(user_input: str) -> str:
     Function used to reply with a baseline response based on the Socio model.
     This function assumes valid input.
     """
-    
-    print("Processing request in debug mode")
-    message_text = user_input.lower()
-
+    message_text = strip_punctuation(user_input.lower())
     detected_keywords = get_detected_keywords(message_text)
-
     nk = len(detected_keywords)
 
     if nk == 0:
-        return process_response_fallback(user_input)
+        return process_response_fallback(message_text)
     elif nk == 1:
         kw = list(detected_keywords.keys())[0]
         if kw == "ADD":
@@ -51,7 +47,7 @@ def process_response_baseline(user_input: str) -> str:
             return handle_have_kw(message_text)
     else:
         # TODO Handle multiple keywords, eg "Students *contain*s a numeric *identif*ier"
-        pass
+        return process_response_fallback(message_text)
 
 
 def handle_add_kw(message_text: str) -> str:
@@ -60,8 +56,7 @@ def handle_add_kw(message_text: str) -> str:
     Old logic:
     for i in range(len(words) - 2):
         if words[i] in ADD_WORDS:
-            # strip punctuation
-            class_name = first_letter_uppercase(strip_punctuation(words[i + 2]))
+            class_name = first_letter_uppercase(words[i + 2])
             return add_class(class_name)
     """
     nps = get_NP_subtrees(chunks)
@@ -71,6 +66,13 @@ def handle_add_kw(message_text: str) -> str:
         return return_error_to_user(f"Please specify what you want to {kw}.")
     elif n_st == 1:
         class_name = get_noun_from_np(nps[0])
+        return add_class(class_name)
+    elif n_st == 2:
+        for t in nps:
+            t.pretty_print()
+        class_name = get_noun_from_np(nps[1])
+        attribute_name = first_letter_lowercase(get_noun_from_np(nps[0]))
+        return add_attribute(class_name, attribute_name)
     else:
         return process_response_fallback(message_text)
 
@@ -167,6 +169,7 @@ def process_response_fallback(user_input: str) -> str:
     """
     Fallback method from Younes' undergrad project, to be used for the cases not handled by Socio's logic.
     """
+    print("Processing request in fallback mode")
     message_text = user_input.lower()
     words = message_text.split(' ')
 
@@ -293,6 +296,10 @@ def return_error_to_user(error_msg: str) -> str:
 
 def first_letter_uppercase(user_input: str) -> str:
     return user_input[0].upper() + user_input[1:]
+
+
+def first_letter_lowercase(user_input: str) -> str:
+    return user_input[0].lower() + user_input[1:]
 
 
 def strip_punctuation(s: str) -> str:
