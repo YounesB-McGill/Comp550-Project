@@ -10,6 +10,7 @@ nltk = "*"
 numpy = "*"
 flask = "*"
 flask-cors = "*"
+inflect = "*"
 
 [requires]
 python_version = "3.7"

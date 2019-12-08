@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import inflect
 import json
 import re
 
@@ -22,6 +23,7 @@ NP_GRAMMAR = r"""
 CP = RegexpParser(NP_GRAMMAR)
 
 parser = CoreNLPParser(url='http://localhost:9000')
+inflect = inflect.engine()
 
 
 def process_response_baseline(user_input: str) -> str:
@@ -33,8 +35,6 @@ def process_response_baseline(user_input: str) -> str:
     print("Processing request in debug mode")
     message_text = user_input.lower()
 
-    # Also need to do NLTK chunking
-    #words = message_text.split(' ')
     detected_keywords = get_detected_keywords(message_text)
 
     nk = len(detected_keywords)
@@ -67,9 +67,15 @@ def handle_add_kw(message_text: str) -> str:
             class_name = first_letter_uppercase(strip_punctuation(words[i + 2]))
             return add_class(class_name)
     """
-    # nps = get_NP_subtrees(chunks)
-    
-    # if
+    nps = get_NP_subtrees(chunks)
+    n_st = len(nps)
+    if n_st == 0:
+        kw = get_detected_keywords(message_text).get("ADD", "add")
+        return return_error_to_user(f"Please specify what you want to {kw}.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+    else:
+        return process_response_fallback(message_text)
 
 
 def handle_contain_kw(message_text: str) -> str:
@@ -101,6 +107,21 @@ def get_NP_subtrees(tree: Tree) -> List[Tree]:
     result = []
     for t in tree.subtrees(lambda t: t.label() == "NP"):
         result.append(t)
+    return result
+
+
+def get_noun_from_np(np_tree: Tree) -> str:
+    result = ""
+
+    for subtree in np_tree.subtrees():
+        if type(subtree[0]) == str:
+            if subtree.label() in ["DT", "PRP", "PRP$"]:
+                continue
+            if subtree.label() == "NNS" and inflect.singular_noun(subtree[0]):
+                result += first_letter_uppercase(inflect.singular_noun(subtree[0]))
+            else:
+                result += first_letter_uppercase(subtree[0])
+
     return result
 
 
@@ -231,6 +252,14 @@ def create_inheritance(child: str, parent: str) -> str:
         "entities": [{"value": child}, {"value": parent}],
         "output": {"text": [f"{child} is a subclass of {parent}."]}
     })
+
+
+def return_error_to_user(error_msg: str) -> str:
+    return json.dumps({
+        "intents": [{"intent": "return_error_to_user"}],
+        "output": {"text": error_msg}
+    })
+
 
 def first_letter_uppercase(user_input: str) -> str:
     return user_input[0].upper() + user_input[1:]

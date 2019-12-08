@@ -9,7 +9,7 @@ import nltk
 from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
 from itertools import chain
 from nltk.tree import Tree
-from processresponse import process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees
+from processresponse import process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees, get_noun_from_np
 
 
 def test_get_detected_keywords():
@@ -51,6 +51,35 @@ def test_get_NP_subtrees():
             print(t)
 
 
+def test_get_noun_from_np():
+    def validate(expected, actual):
+        assert expected == get_noun_from_np(Tree.fromstring(actual))
+
+    validate("Person", "(NP (NN person))")
+    validate("Room", "(NP (NNS rooms))")
+
+    # inflect fails to get the correct singular for curricula, radii, or indices,
+    # but otherwise does well on these non-standard plurals
+    validate("Wife", "(NP (NNS wives))")
+    validate("Wolf", "(NP (NNS wolves))")
+    validate("Tomato", "(NP (NNS tomatoes))")
+    validate("Veto", "(NP (NNS vetoes))")
+    validate("Foot", "(NP (NNS feet))")
+    validate("Moose", "(NP (NNS moose))")
+    validate("Child", "(NP (NNS children))")
+    validate("Person", "(NP (NNS people))")
+    validate("Alumnus", "(NP (NNS alumni))")
+    validate("Thesis", "(NP (NNS theses))")
+    validate("Criterion", "(NP (NNS criteria))")
+
+    validate("School", "(NP (DT a) (NN school))")
+    validate("SpecificFlight", "(NP (DT a) (JJ specific) (NN flight))")
+    validate("StudentRole", "(NP (DT a) (NN student) (NN role))")
+    validate("Score", "(NP (PRP$ their) (NNS scores))")
+
+    validate("PoliceInformationSystem", "(NP (DT The) (NN police) (NN information) (NN system))")
+
+
 def setup_deps():
     nltk.download('averaged_perceptron_tagger')
     nltk.download('maxent_ne_chunker')
@@ -61,8 +90,8 @@ def test():
     #test_get_detected_keywords()
     #test_get_chunks()
     #test_serialized_parse_trees()
-    test_get_NP_subtrees()
-
+    #test_get_NP_subtrees()
+    test_get_noun_from_np()
 
 
 if __name__ == "__main__":

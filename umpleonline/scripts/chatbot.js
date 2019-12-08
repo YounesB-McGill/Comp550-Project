@@ -57,7 +57,6 @@ function updateModelLog() {
       modelClassJsons[classInfo.name] = classInfo;
     }
   }
-  console.log(modelLog);
 }
 
 function updateUmpleCode() {
@@ -75,6 +74,7 @@ function chatbotAction() {
     'create_inheritance': addInheritance,
     'create_association': addAssociation,
     'create_composition': addComposition,
+    'return_error_to_user': returnErrorToUser,
     'unknown': () => {}
   };
 
@@ -206,6 +206,10 @@ function addComposition() {
   }
   
   Page.setUmpleCode(umpleCode);
+}
+
+function returnErrorToUser() {
+  userResponse = jsonResponse.output.text;
 }
 
 function debug4() {
