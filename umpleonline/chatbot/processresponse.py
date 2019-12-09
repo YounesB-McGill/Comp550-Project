@@ -25,6 +25,8 @@ CP = RegexpParser(NP_GRAMMAR)
 parser = CoreNLPParser(url='http://localhost:9000')
 inflect = inflect.engine()
 
+classes_created = []  # Must keep track of this to avoid errors
+
 
 def process_response_baseline(user_input: str) -> str:
     """
@@ -52,13 +54,6 @@ def process_response_baseline(user_input: str) -> str:
 
 def handle_add_kw(message_text: str) -> str:
     chunks = get_chunks(message_text)
-    """
-    Old logic:
-    for i in range(len(words) - 2):
-        if words[i] in ADD_WORDS:
-            class_name = first_letter_uppercase(words[i + 2])
-            return add_class(class_name)
-    """
     nps = get_NP_subtrees(chunks)
     n_st = get_num_nonnested_NP_subtrees(chunks)
     if n_st == 0:
@@ -78,7 +73,24 @@ def handle_add_kw(message_text: str) -> str:
 
 
 def handle_contain_kw(message_text: str) -> str:
-    return process_response_fallback(message_text)
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st < 2:
+        return return_error_to_user(
+            "I don't get what you meant. If you want to make a composition, specify the two classes.")
+    elif n_st == 2:
+        whole = get_noun_from_np(nps[0])
+        part = get_noun_from_np(nps[1])
+
+        if whole not in classes_created:
+            classes_created.append(whole)
+        if part not in classes_created:
+            classes_created.append(part)
+
+        return create_composition(whole, part)
+    else:
+        return process_response_fallback(message_text)
 
 
 def handle_have_kw(message_text: str) -> str:
@@ -108,13 +120,32 @@ def get_chunks_fallback(message_text: str) -> Tree:
 
 
 def get_NP_subtrees(tree: Tree) -> List[Tree]:
+    """
+    Return the lowest level, non nested NP subtrees of the input. Works with most sentences.
+    """
     result = []
+    all_nps = {}
     for t in tree.subtrees(lambda t: t.label() == "NP"):
-        result.append(t)
+        all_nps[get_tree_words(t)] = t
+
+    for candidate in all_nps.items():
+        eligible = True
+        for other in all_nps.keys():
+            if other == candidate[0]:
+                continue
+            if other in candidate[0]:
+                eligible = False
+                break
+        if eligible:
+            result.append(candidate[1])
+
     return result
 
-
 def get_num_nonnested_NP_subtrees(tree: Tree) -> int:
+    return len(get_NP_subtrees(tree))
+
+
+def get_num_nonnested_NP_subtrees_(tree: Tree) -> int:
     result = 0
 
     for t in tree.subtrees(lambda t: t.label() == "NP"):
@@ -155,6 +186,14 @@ def get_noun_from_np(np_tree: Tree) -> str:
                 result += first_letter_uppercase(subtree[0])
 
     return result
+
+
+def get_tree_words(tree: Tree) -> str:
+    """
+    Return the words of a tree node, eg:
+    (NP (DT a) (JJ specific) (NN flight)) -> "a specific flight"
+    """
+    return " ".join(tree.leaves())
 
 
 def get_synonyms(word: str) -> set:
@@ -247,6 +286,14 @@ def get_detected_keywords(user_input: str) -> Dict[str, str]:
 
 
 def add_class(class_name: str) -> str:
+    global classes_created
+    if class_name in classes_created:
+        return return_error_to_user(f"{class_name} is already created, so let's not make it again.")
+    
+    return add_class_json(class_name)
+
+
+def add_class_json(class_name: str) -> str:
     return json.dumps({
         "intents": [{"intent": "create_class"}],
         "entities": [{"value": class_name}],
@@ -292,6 +339,11 @@ def return_error_to_user(error_msg: str) -> str:
         "intents": [{"intent": "return_error_to_user"}],
         "output": {"text": error_msg}
     })
+
+
+def reset_classes_created():
+    global classes_created
+    classes_created = []
 
 
 def first_letter_uppercase(user_input: str) -> str:

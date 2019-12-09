@@ -7,6 +7,7 @@ var umpleCode;
 var Action = window.parent.Action;
 var Page = window.parent.Page;
 var Layout = window.parent.Layout;
+var DiagramEdit = window.parent.DiagramEdit;
 
 const defaultClassPositions = [[ 50,  50], [250,  50], [450,  50],
                                [ 50, 200], [250, 200], [450, 200],
@@ -125,13 +126,16 @@ function addClass() {
 }
 
 function addClassWithName(className) {
-  if (!classesAdded.includes(className)) {
-    classesAdded.push(className);
+  if (!Page.getUmpleCode().includes(`class ${className}`)) {
     Action.directAddClass(firstLetterUppercase(className), defaultClassPositions[numClasses]);
-    numClasses++;
     updateModelLog();
   } else {
-    userResponse = `${className} is already created, so let's not make it again.`;
+    userResponse = `${className} is already created, so let's not make it again.`;  
+  }
+
+  if (!classesAdded.includes(className)) {
+    classesAdded.push(className);
+    numClasses++;
   }
 }
 

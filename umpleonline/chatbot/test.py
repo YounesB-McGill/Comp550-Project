@@ -5,13 +5,19 @@ Run these unit tests by running `pytest test.py` in the umpleonline/chatbot dire
 """
 
 import nltk
+import pytest
 
 from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
 from itertools import chain
 from nltk.tree import Tree
 from processresponse import (process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees,
-    get_noun_from_np, get_num_nonnested_NP_subtrees, handle_add_kw, handle_contain_kw, handle_have_kw,
-    add_class, add_attribute, create_composition, create_association, create_inheritance, return_error_to_user)
+    get_noun_from_np, get_num_nonnested_NP_subtrees, get_tree_words, handle_add_kw, handle_contain_kw, handle_have_kw,
+    add_class, add_class_json, add_attribute, create_composition, create_association, create_inheritance,
+    return_error_to_user, reset_classes_created)
+
+
+def setup_function():
+    reset_classes_created()
 
 
 def test_get_detected_keywords():
@@ -125,12 +131,36 @@ def test_handle_add_kw():
         assert expected == handle_add_kw(actual)
 
     validate(add_class("School"), "create a school")
+
+    validate(add_class_json("School"), "create a school")
     validate(add_class("PlayingCard"), "create a playing card")
-    validate(add_class("LoseTurnActionCard"), "make a lose turn action card")
     validate(add_class("Alumnus"), "create an alumni")
-    
+
     validate(add_attribute("Person", "work"), "Add work in person.")
     validate(add_attribute("Person", "numericAge"), "Add numeric age in person.")
+
+    # This test is disabled because Stanford NLP gives a wrong parse
+    # validate(add_class("LoseTurnActionCard"), "make a lose turn action card")
+
+
+def test_handle_contain_kw():
+    def validate(expected, actual):
+        assert expected == handle_contain_kw(actual)
+
+    validate(create_composition("House", "Room"), "The house is made of rooms.")
+    validate(create_composition("Car", "Wheel"), "A car contains wheels.")
+    validate(create_composition("SpecificConference", "ProgramCommittee"),
+             "A specific conference consists of a program committee.")
+
+
+def test_get_tree_words():
+    def validate(expected, actual):
+        assert expected == get_tree_words(Tree.fromstring(actual))
+
+    validate("tomatoes", "(NP (NNS tomatoes))")
+    validate("a specific flight", "(NP (DT a) (JJ specific) (NN flight))")
+    validate("a teleport action card", "(NP (DT a) (NN teleport) (NN action) (NN card))")
+    validate("a lose turn action card", "(NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))")
 
 
 def setup_deps():
@@ -139,16 +169,21 @@ def setup_deps():
     nltk.download('words')
 
 
-def test():
+def run_all():
+    """
+    Run all tests.
+    """
     #test_get_detected_keywords()
     #test_get_chunks()
     #test_serialized_parse_trees()
     #test_get_NP_subtrees()
     #test_get_noun_from_np()
     #test_get_num_nonnested_NP_subtrees()
+    #test_get_tree_words()
     test_handle_add_kw()
+    test_handle_contain_kw()
 
 
 if __name__ == "__main__":
     setup_deps()
-    test()
+    run_all()
