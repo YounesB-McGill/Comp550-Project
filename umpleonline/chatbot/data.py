@@ -6,7 +6,9 @@ from itertools import chain
 ADD_WORDS = ["add", "create", "make"]
 CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
 HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
-ISA_WORDS = ["is a", "are", "can ", "could ", "may "]
+
+# The last two must be accompanied with "as" and "role" respectively
+ISA_WORDS = ["is a", "are ", "can ", "could ", "may ", " serve", " play"]
 
 ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age in person.", "Create a school."]
 CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]

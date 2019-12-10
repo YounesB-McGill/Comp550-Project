@@ -22,6 +22,12 @@ from processresponse import (process_response_baseline, handle_add_kw, handle_co
 from utils import get_DT_for_word, get_detected_keywords, is_attribute
 
 
+def setup_deps():
+    nltk.download('averaged_perceptron_tagger')
+    nltk.download('maxent_ne_chunker')
+    nltk.download('words')
+
+
 def setup_function():
     reset_classes_created()
 
@@ -42,15 +48,10 @@ def test_get_detected_keywords():
 
 
 def test_get_DT_for_word():
-    assert "a" == get_DT_for_word("school")
-    assert "a" == get_DT_for_word("Firefighter")
-    assert "a" == get_DT_for_word("PlayingCard")
-
-    assert "an" == get_DT_for_word("Application")
-    assert "an" == get_DT_for_word("Elevator")
-    assert "an" == get_DT_for_word("institution")
-    assert "an" == get_DT_for_word("offering")
-    assert "an" == get_DT_for_word("User")
+    for w in ["school", "Firefighter", "PlayingCard"]:
+        assert "a" == get_DT_for_word(w)
+    for w in ["Application", "Elevator", "institution", "offering", "User"]:
+        assert "an" == get_DT_for_word(w)
 
 
 def test_is_attribute():
@@ -159,6 +160,16 @@ def test_get_num_nonnested_NP_subtrees():
     validate(0, totree("make."))
 
 
+def test_get_tree_words():
+    def validate(expected, actual):
+        assert expected == get_tree_words(Tree.fromstring(actual))
+
+    validate("tomatoes", "(NP (NNS tomatoes))")
+    validate("a specific flight", "(NP (DT a) (JJ specific) (NN flight))")
+    validate("a teleport action card", "(NP (DT a) (NN teleport) (NN action) (NN card))")
+    validate("a lose turn action card", "(NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))")
+
+
 def test_handle_add_kw():
     def validate(expected, actual):
         assert expected == handle_add_kw(actual)
@@ -215,40 +226,26 @@ def test_handle_isa_kw():
     def validate(expected, actual):
         assert expected == handle_isa_kw(actual)
 
-    ISA_EXAMPLE_SENTENCES = ["A student is a person.", "Students are people.", "A specific flight is a flight.",
-    "Triangles are a type of shape.", "Players can serve as defenders.", "A lion may be considered as a giant cat."]
-
     validate(create_inheritance("Student", "Person"), "A student is a person.")
     validate(create_inheritance("Student", "Person"), "Students are people.")
     validate(create_inheritance("SpecificFlight", "Flight"), "A specific flight is a flight.")
     validate(create_inheritance("Triangle", "Shape"), "Triangles are a type of shape.")
-    #validate(create_inheritance("Defender", "Player"), "Players can serve as defenders.")
+    validate(create_inheritance("Circle", "Shape"), "Circles are kinds of shapes.")
+    validate(create_inheritance("Defender", "Player"), "Players can serve as defenders.")
+    validate(create_inheritance("Grader", "TeachingAssistant"), "Some teaching assistants also play the role of graders.")
+    validate(create_inheritance("Supervisor", "Employee"), "Some employees play roles as supervisors.")
     validate(create_inheritance("Lion", "GiantCat"), "A lion may be considered as a giant cat.")
+    validate(create_inheritance("Tiger", "GiantCat"), "A tiger may also be considered a kind of giant cat.")
     validate(create_inheritance("TeleportActionCard", "PlayingCard"), "A teleport action card is a playing card.")
 
     validate(return_error_to_user("If you're trying to create an inheritance, clearly specify both classes."),
              "This item may be considered.")
 
 
+@pytest.mark.skip("Not yet implemented")
 def test_handle_no_kw():
     # TODO
     pass
-
-
-def test_get_tree_words():
-    def validate(expected, actual):
-        assert expected == get_tree_words(Tree.fromstring(actual))
-
-    validate("tomatoes", "(NP (NNS tomatoes))")
-    validate("a specific flight", "(NP (DT a) (JJ specific) (NN flight))")
-    validate("a teleport action card", "(NP (DT a) (NN teleport) (NN action) (NN card))")
-    validate("a lose turn action card", "(NP (DT a) (VBP lose) (NP (NN turn) (NN action) (NN card)))")
-
-
-def setup_deps():
-    nltk.download('averaged_perceptron_tagger')
-    nltk.download('maxent_ne_chunker')
-    nltk.download('words')
 
 
 def run_all():

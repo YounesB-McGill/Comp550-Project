@@ -61,7 +61,7 @@ def get_NP_subtrees(tree: Tree) -> List[Tree]:
             if other in candidate[0]:
                 eligible = False
                 break
-        if eligible:
+        if eligible and not is_descriptive_NP(candidate[1]):
             result.append(candidate[1])
 
     return result
@@ -83,6 +83,10 @@ def get_noun_from_np(np_tree: Tree) -> str:
                 result += first_letter_uppercase(subtree[0])
 
     return result
+
+
+def is_descriptive_NP(tree: Tree) -> bool:
+    return get_tree_words(tree) in ["a kind", "kinds", "a type", "types", "a role", "the role", "roles"]
 
 
 def get_tree_words(tree: Tree) -> str:

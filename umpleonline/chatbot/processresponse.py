@@ -2,8 +2,6 @@
 import re
 from typing import List
 
-from nltk.corpus import wordnet
-
 from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
     return_error_to_user)
 from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
@@ -132,15 +130,22 @@ def handle_isa_kw(message_text: str) -> str:
     n_st = get_num_nonnested_NP_subtrees(chunks)
     if n_st < 2:
         return return_error_to_user("If you're trying to create an inheritance, clearly specify both classes.")
+    else:
+        if ((" serve" in message_text and " as " in message_text) or
+            (" play" in message_text and " role" in message_text)):
+            child = get_noun_from_np(nps[1])
+            parent = get_noun_from_np(nps[0])
+        else:
+            child = get_noun_from_np(nps[0])
+            parent = get_noun_from_np(nps[1])
 
-    # TODO
-    # else:
-    #     kw = get_detected_keywords(message_text).get("ISA", "is a")
+        if child not in classes_created:
+            classes_created.append(child)
 
-    #     if kw == "":
+        if parent not in classes_created:
+            classes_created.append(parent)
 
-    #     class_name = get_noun_from_np(nps[0])
-    #     second_noun = get_noun_from_np(nps[1])
+        return create_inheritance(child, parent)
 
     return process_response_fallback(message_text)
 
@@ -148,14 +153,6 @@ def handle_isa_kw(message_text: str) -> str:
 def handle_no_kw(message_text: str) -> str:
     # This will add an association if possible, otherwise it will create a class
     return process_response_fallback(message_text)   
-
-
-def get_synonyms(word: str) -> set:
-    res = set()
-    for syn in wordnet.synsets(word):
-        for lm in syn.lemmas():
-            res.add(lm.name())
-    return res
 
 
 def process_response_fallback(user_input: str) -> str:
