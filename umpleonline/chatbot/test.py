@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 """
-Run these unit tests by running `pytest test.py` in the umpleonline/chatbot directory.
+Run these unit tests by running `pipenv run pytest test.py -W ignore::DeprecationWarning:`
+in the umpleonline/chatbot directory.
+
+Tests marked with * are ones that pass with our system but fail with Socio. 
 """
 
 import nltk
@@ -13,7 +16,7 @@ from nltk.tree import Tree
 from processresponse import (process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees,
     get_noun_from_np, get_num_nonnested_NP_subtrees, get_tree_words, handle_add_kw, handle_contain_kw, handle_have_kw,
     add_class, add_class_json, add_attribute, create_composition, create_association, create_inheritance,
-    return_error_to_user, reset_classes_created)
+    return_error_to_user, reset_classes_created, get_DT_for_word, is_attribute)
 
 
 def setup_function():
@@ -30,6 +33,29 @@ def test_get_detected_keywords():
     for s in HAVE_EXAMPLE_SENTENCES:
         assert "HAVE" in get_detected_keywords(s)
         print(get_detected_keywords(s))
+
+
+def test_get_DT_for_word():
+    assert "a" == get_DT_for_word("school")
+    assert "a" == get_DT_for_word("Firefighter")
+    assert "a" == get_DT_for_word("PlayingCard")
+
+    assert "an" == get_DT_for_word("Application")
+    assert "an" == get_DT_for_word("Elevator")
+    assert "an" == get_DT_for_word("institution")
+    assert "an" == get_DT_for_word("offering")
+    assert "an" == get_DT_for_word("User")
+
+
+def test_is_attribute():
+    attributes = ["name", "phoneNumber", "serialNumber", "competitionDate", "userId", "vehicleIdentifierNumber"]
+    non_attributes = ["", "student", "course", "rgbColor", "playingCards"]
+
+    for a in attributes:
+        assert is_attribute(a)
+
+    for na in non_attributes:
+        assert not is_attribute(na)
 
 
 def test_get_chunks():
@@ -84,6 +110,7 @@ def test_get_noun_from_np():
     validate("SpecificFlight", "(NP (DT a) (JJ specific) (NN flight))")
     validate("StudentRole", "(NP (DT a) (NN student) (NN role))")
     validate("Score", "(NP (PRP$ their) (NNS scores))")
+    validate("BankAccount", "(NP (QP (CD one) (CC or) (JJR more)) (NN bank) (NNS accounts))")
 
     validate("PoliceInformationSystem", "(NP (DT The) (NN police) (NN information) (NN system))")
     validate("TeleportActionCard", "(NP (DT a) (NN teleport) (NN action) (NN card))")
@@ -131,8 +158,6 @@ def test_handle_add_kw():
         assert expected == handle_add_kw(actual)
 
     validate(add_class("School"), "create a school")
-
-    validate(add_class_json("School"), "create a school")
     validate(add_class("PlayingCard"), "create a playing card")
     validate(add_class("Alumnus"), "create an alumni")
 
@@ -149,8 +174,35 @@ def test_handle_contain_kw():
 
     validate(create_composition("House", "Room"), "The house is made of rooms.")
     validate(create_composition("Car", "Wheel"), "A car contains wheels.")
+    validate(create_composition("Car", "Tire"), "A car is composed of tires.")  # *
     validate(create_composition("SpecificConference", "ProgramCommittee"),
-             "A specific conference consists of a program committee.")
+             "A specific conference consists of a program committee.")  # *
+
+    validate(add_attribute("Student", "numericIdentifier"), "Students contains a numeric identifier.")
+
+
+def test_handle_have_kw():
+    def validate(expected, actual):
+        assert expected == handle_have_kw(actual)
+    
+    attributes = ["name", "phoneNumber", "serialNumber", "competitionDate", "userId", "vehicleIdentifierNumber"]
+    non_attributes = ["", "student", "course", "rgbColor", "playingCards"]
+
+    validate(add_attribute("Student", "email"), "A student has an email.")
+    validate(add_attribute("Student", "email"), "A student is identified by their email.")
+    validate(add_attribute("Student", "name"), "students are characterized by their names.")
+    validate(add_attribute("Vehicle", "vehicleIdentifierNumber"),
+             "vehicles are identified by a vehicle identifier number (VIN).")  # *
+    validate(add_attribute("Tournament", "date"), "Each tournament has a date when it is played.")
+    validate(add_attribute("Person", "phone"), "People registered are identified by their phone, which is unique.") # *
+
+    validate(create_association("Person", "Address"), "People have addresses.")
+    validate(create_association("Customer", "BankAccount"), "A customer has one or more bank accounts.")  # *
+    validate(create_association("Student", "Major"), "Students can have one or two majors.")
+    validate(create_association("Tileo", "PlayingCard"), "Tileo is characterized by playing cards, each with a color.")
+
+    validate(return_error_to_user("I really don't understand what you meant. Please rephrase."), "Has.")
+    validate(return_error_to_user("Are trying to add a class? Try saying 'Create a Car.'"), "A car has.")
 
 
 def test_get_tree_words():
@@ -173,15 +225,18 @@ def run_all():
     """
     Run all tests.
     """
-    #test_get_detected_keywords()
-    #test_get_chunks()
-    #test_serialized_parse_trees()
-    #test_get_NP_subtrees()
-    #test_get_noun_from_np()
-    #test_get_num_nonnested_NP_subtrees()
-    #test_get_tree_words()
+    test_get_detected_keywords()
+    test_get_DT_for_word()
+    test_is_attribute()
+    test_get_chunks()
+    test_serialized_parse_trees()
+    test_get_NP_subtrees()
+    test_get_noun_from_np()
+    test_get_num_nonnested_NP_subtrees()
+    test_get_tree_words()
     test_handle_add_kw()
     test_handle_contain_kw()
+    test_handle_have_kw()
 
 
 if __name__ == "__main__":

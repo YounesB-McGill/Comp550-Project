@@ -2,6 +2,7 @@
 import inflect
 import json
 import re
+import string
 
 from nltk import word_tokenize, ne_chunk, pos_tag
 from nltk import RegexpParser
@@ -16,6 +17,8 @@ from typing import Dict, List
 ADD_WORDS = ["add", "create", "make"]
 CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
 HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
+ISA_WORDS = []
+
 NP_GRAMMAR = r"""
     NP: {<DT|PP\$>?<JJ>*<NN>}
         {<NNP>+}
@@ -80,20 +83,55 @@ def handle_contain_kw(message_text: str) -> str:
         return return_error_to_user(
             "I don't get what you meant. If you want to make a composition, specify the two classes.")
     elif n_st == 2:
-        whole = get_noun_from_np(nps[0])
-        part = get_noun_from_np(nps[1])
+        first_noun = get_noun_from_np(nps[0])
+        second_noun = get_noun_from_np(nps[1])
 
-        if whole not in classes_created:
-            classes_created.append(whole)
-        if part not in classes_created:
-            classes_created.append(part)
+        if first_noun not in classes_created:
+            classes_created.append(first_noun)
 
-        return create_composition(whole, part)
+        if is_attribute(get_noun_from_np(nps[1])):
+            return add_attribute(first_noun, first_letter_lowercase(second_noun))
+        else:
+            whole = first_noun
+            part = second_noun
+
+            if part not in classes_created:
+                classes_created.append(part)
+
+            return create_composition(whole, part)
     else:
         return process_response_fallback(message_text)
 
 
 def handle_have_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        if class_name in classes_created:
+            return return_error_to_user(f"What do want to specify about {class_name}?")
+        else:
+            dt = get_DT_for_word(class_name)
+            return return_error_to_user(f"Are trying to add a class? Try saying 'Create {dt} {class_name}.'")
+    else:
+        # TODO In the future, also allow multiple attributes ("Student has a name and email").
+        # This requires updating the website.
+        class_name = get_noun_from_np(nps[0])
+        second_noun = get_noun_from_np(nps[1])
+
+        if class_name in classes_created:
+            classes_created.append(class_name)
+
+        if is_attribute(second_noun):
+            return add_attribute(class_name, first_letter_lowercase(second_noun))
+        else:
+            if second_noun not in classes_created:
+                classes_created.append(second_noun)
+            return create_association(class_name, second_noun)
+
     return process_response_fallback(message_text)
 
 
@@ -178,7 +216,7 @@ def get_noun_from_np(np_tree: Tree) -> str:
 
     for subtree in np_tree.subtrees():
         if type(subtree[0]) == str:
-            if subtree.label() in ["DT", "PRP", "PRP$", ","]:
+            if subtree.label() in ["DT", "PRP", "PRP$", ",", "QP", "CC", "CD", "JJR"]:
                 continue
             if subtree.label() == "NNS" and inflect.singular_noun(subtree[0]):
                 result += first_letter_uppercase(inflect.singular_noun(subtree[0]))
@@ -202,6 +240,18 @@ def get_synonyms(word: str) -> set:
         for lm in syn.lemmas():
             res.add(lm.name())
     return res
+
+
+def is_attribute(noun: str) -> bool:
+    """
+    Return True if the noun is a common attribute.
+    """
+    noun = noun.lower()
+    common_attribute_parts = ["name", "number", "identifier", "date", "time", "string"]
+    for p in common_attribute_parts:
+        if p in noun:
+            return True
+    return noun.lower() in ["email", "id", "userid", "phone", "color"]
 
 
 def process_response_fallback(user_input: str) -> str:
@@ -261,7 +311,7 @@ def process_response_fallback(user_input: str) -> str:
         for i in range(len(words)):
             pass #if words[]
 
-    return "Error"
+    return return_error_to_user("Sorry, I could not process your request :(")
 
 
 
@@ -355,7 +405,7 @@ def first_letter_lowercase(user_input: str) -> str:
 
 
 def strip_punctuation(s: str) -> str:
-    return re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", s))
+    return s.translate(str.maketrans('', '', string.punctuation))
 
 
 def contains_one_of(user_input: str, targets: str) -> bool:
@@ -364,3 +414,12 @@ def contains_one_of(user_input: str, targets: str) -> bool:
     """
     return any(w in user_input for w in targets)
 
+
+def get_DT_for_word(word) -> str:
+    if len(word) == 0:
+        return ""
+    word = word.lower()
+    if word[0] in ["a", "e", "i", "o", "u"]:
+        return "an"
+    else:
+        return "a"
