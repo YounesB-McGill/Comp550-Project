@@ -18,7 +18,7 @@ from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE
     ALL_SENTENCES, PARSE_TREES)
 from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np, get_tree_words
 from processresponse import (process_response_baseline, handle_add_kw, handle_contain_kw, handle_have_kw,
-    add_class, reset_classes_created)
+    handle_isa_kw, handle_no_kw, add_class, reset_classes_created)
 from utils import get_DT_for_word, get_detected_keywords, is_attribute
 
 
@@ -211,6 +211,30 @@ def test_handle_have_kw():
     validate(return_error_to_user("Are trying to add a class? Try saying 'Create a Car.'"), "A car has.")
 
 
+def test_handle_isa_kw():
+    def validate(expected, actual):
+        assert expected == handle_isa_kw(actual)
+
+    ISA_EXAMPLE_SENTENCES = ["A student is a person.", "Students are people.", "A specific flight is a flight.",
+    "Triangles are a type of shape.", "Players can serve as defenders.", "A lion may be considered as a giant cat."]
+
+    validate(create_inheritance("Student", "Person"), "A student is a person.")
+    validate(create_inheritance("Student", "Person"), "Students are people.")
+    validate(create_inheritance("SpecificFlight", "Flight"), "A specific flight is a flight.")
+    validate(create_inheritance("Triangle", "Shape"), "Triangles are a type of shape.")
+    #validate(create_inheritance("Defender", "Player"), "Players can serve as defenders.")
+    validate(create_inheritance("Lion", "GiantCat"), "A lion may be considered as a giant cat.")
+    validate(create_inheritance("TeleportActionCard", "PlayingCard"), "A teleport action card is a playing card.")
+
+    validate(return_error_to_user("If you're trying to create an inheritance, clearly specify both classes."),
+             "This item may be considered.")
+
+
+def test_handle_no_kw():
+    # TODO
+    pass
+
+
 def test_get_tree_words():
     def validate(expected, actual):
         assert expected == get_tree_words(Tree.fromstring(actual))
@@ -243,6 +267,8 @@ def run_all():
     test_handle_add_kw()
     test_handle_contain_kw()
     test_handle_have_kw()
+    test_handle_isa_kw()
+    test_handle_no_kw()
 
 
 if __name__ == "__main__":

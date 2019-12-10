@@ -25,7 +25,7 @@ def process_response_baseline(user_input: str) -> str:
     nk = len(detected_keywords)
 
     if nk == 0:
-        return process_response_fallback(message_text)
+        return handle_no_kw(message_text)
     elif nk == 1:
         kw = list(detected_keywords.keys())[0]
         if kw == "ADD":
@@ -34,8 +34,15 @@ def process_response_baseline(user_input: str) -> str:
             return handle_contain_kw(message_text)
         elif kw == "HAVE":
             return handle_have_kw(message_text)
+        elif kw == "ISA":
+            return handle_isa_kw(message_text)
+    elif nk == 2:
+        if "CONTAIN" in detected_keywords.keys() and "ISA" in detected_keywords.keys(): # "can consist of"
+            return handle_contain_kw(message_text)
+        else:
+            return process_response_fallback(message_text)
     else:
-        # TODO Handle multiple keywords, eg "Students *contain*s a numeric *identif*ier"
+        # TODO Handle more complex multiple keyword scenarios
         return process_response_fallback(message_text)
 
 
@@ -117,6 +124,30 @@ def handle_have_kw(message_text: str) -> str:
             return create_association(class_name, second_noun)
 
     return process_response_fallback(message_text)
+
+
+def handle_isa_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st < 2:
+        return return_error_to_user("If you're trying to create an inheritance, clearly specify both classes.")
+
+    # TODO
+    # else:
+    #     kw = get_detected_keywords(message_text).get("ISA", "is a")
+
+    #     if kw == "":
+
+    #     class_name = get_noun_from_np(nps[0])
+    #     second_noun = get_noun_from_np(nps[1])
+
+    return process_response_fallback(message_text)
+
+
+def handle_no_kw(message_text: str) -> str:
+    # This will add an association if possible, otherwise it will create a class
+    return process_response_fallback(message_text)   
 
 
 def get_synonyms(word: str) -> set:

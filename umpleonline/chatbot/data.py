@@ -6,13 +6,14 @@ from itertools import chain
 ADD_WORDS = ["add", "create", "make"]
 CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
 HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
-ISA_WORDS = []
+ISA_WORDS = ["is a", "are", "can ", "could ", "may "]
 
 ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age in person.", "Create a school."]
 CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]
 HAVE_EXAMPLE_SENTENCES = ["Bulky packages are characterized by their width, length and height.",
 	"Students have a numeric identifier.", "Medicines have an active ingredient."]
-ISA_EXAMPLE_SENTENCES = []
+ISA_EXAMPLE_SENTENCES = ["A student is a person.", "Students are people.", "A specific flight is a flight.",
+    "Triangles are a type of shape.", "Players can serve as defenders.", "A lion may be considered as a giant cat."]
 
 ALL_SENTENCES = chain(ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ISA_EXAMPLE_SENTENCES)
 
