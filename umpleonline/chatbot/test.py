@@ -6,17 +6,19 @@ in the umpleonline/chatbot directory.
 
 Tests marked with * are ones that pass with our system but fail with Socio. 
 """
+from itertools import chain
 
 import nltk
 import pytest
-
-from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
-from itertools import chain
 from nltk.tree import Tree
-from processresponse import (process_response_baseline, get_detected_keywords, get_chunks, get_NP_subtrees,
-    get_noun_from_np, get_num_nonnested_NP_subtrees, get_tree_words, handle_add_kw, handle_contain_kw, handle_have_kw,
-    add_class, add_class_json, add_attribute, create_composition, create_association, create_inheritance,
-    return_error_to_user, reset_classes_created, get_DT_for_word, is_attribute)
+
+from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
+    return_error_to_user)
+from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
+from parser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np, get_tree_words
+from processresponse import (process_response_baseline, handle_add_kw, handle_contain_kw, handle_have_kw,
+    add_class, reset_classes_created)
+from utils import get_DT_for_word, get_detected_keywords, is_attribute
 
 
 def setup_function():

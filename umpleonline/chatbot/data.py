@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 
 from itertools import chain
-from processresponse import get_chunks
 
+
+ADD_WORDS = ["add", "create", "make"]
+CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
+HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
+ISA_WORDS = []
 
 ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age in person.", "Create a school."]
 CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]
@@ -59,10 +63,3 @@ PARSE_TREES = [
         (VP (VBP have) (NP (DT an) (JJ active) (NN ingredient)))
         (. .)))""", 
 ]
-
-
-def generate_parse_trees():
-    result = []
-    for s in ALL_SENTENCES:
-        result.append('"""' + str(get_chunks(s)) + '""", ')
-    return result

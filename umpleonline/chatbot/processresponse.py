@@ -1,32 +1,16 @@
 #!/usr/bin/python3
-import inflect
-import json
 import re
-import string
+from typing import List
 
-from nltk import word_tokenize, ne_chunk, pos_tag
-from nltk import RegexpParser
 from nltk.corpus import wordnet
-from nltk.parse import CoreNLPParser
-from nltk.tree import Tree
-from nltk.util import breadth_first
-from typing import Dict, List
 
+from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
+    return_error_to_user)
+from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
+from parser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np
+from utils import (first_letter_lowercase, first_letter_uppercase, contains_one_of, get_DT_for_word, is_attribute,
+    get_detected_keywords, strip_punctuation)
 
-# this needs to move to wherever the add rule is defined
-ADD_WORDS = ["add", "create", "make"]
-CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
-HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
-ISA_WORDS = []
-
-NP_GRAMMAR = r"""
-    NP: {<DT|PP\$>?<JJ>*<NN>}
-        {<NNP>+}
-"""
-CP = RegexpParser(NP_GRAMMAR)
-
-parser = CoreNLPParser(url='http://localhost:9000')
-inflect = inflect.engine()
 
 classes_created = []  # Must keep track of this to avoid errors
 
@@ -135,123 +119,12 @@ def handle_have_kw(message_text: str) -> str:
     return process_response_fallback(message_text)
 
 
-def get_chunks(message_text: str) -> Tree:
-    """
-    Return the parse given by the Stanford CoreNLP parser.
-    """
-    try:
-        parse_list = parser.parse(message_text.split())
-        for tree in parse_list:
-            return tree
-    except Exception as e:
-        print("The following exception occurred when attempting to connect to the Stanford NLP server:\n", e)
-        print("\nReturning the default NLTK parse of a sentence instead.")
-        return get_chunks_fallback(message_text)
-
-
-def get_chunks_fallback(message_text: str) -> Tree:
-    """
-    Return the default NLTK parse of a sentence. Used as a backup when the more accurate Stanford NLP server is not running.
-    """
-    tagged_sentence = pos_tag(word_tokenize(message_text))
-    return CP.parse(tagged_sentence)
-
-
-def get_NP_subtrees(tree: Tree) -> List[Tree]:
-    """
-    Return the lowest level, non nested NP subtrees of the input. Works with most sentences.
-    """
-    result = []
-    all_nps = {}
-    for t in tree.subtrees(lambda t: t.label() == "NP"):
-        all_nps[get_tree_words(t)] = t
-
-    for candidate in all_nps.items():
-        eligible = True
-        for other in all_nps.keys():
-            if other == candidate[0]:
-                continue
-            if other in candidate[0]:
-                eligible = False
-                break
-        if eligible:
-            result.append(candidate[1])
-
-    return result
-
-def get_num_nonnested_NP_subtrees(tree: Tree) -> int:
-    return len(get_NP_subtrees(tree))
-
-
-def get_num_nonnested_NP_subtrees_(tree: Tree) -> int:
-    result = 0
-
-    for t in tree.subtrees(lambda t: t.label() == "NP"):
-        result += 1
-
-        n_NP_subtrees = 0
-        for j, st in enumerate(t.subtrees(lambda t: t.label() == "NP")):
-            if j == 0:
-                continue
-
-            n_NP_subsubtrees = 0
-            for k, sst in enumerate(st.subtrees(lambda t: t.label() == "NP")):
-                if k == 0:
-                    continue
-                n_NP_subsubtrees += 1
-            
-            if n_NP_subsubtrees in [1, 2]:
-                result -= 1
-
-            n_NP_subtrees += 1
-
-        if n_NP_subtrees in [1, 2]:
-            result -= 1
-
-    return result
-
-
-def get_noun_from_np(np_tree: Tree) -> str:
-    result = ""
-
-    for subtree in np_tree.subtrees():
-        if type(subtree[0]) == str:
-            if subtree.label() in ["DT", "PRP", "PRP$", ",", "QP", "CC", "CD", "JJR"]:
-                continue
-            if subtree.label() == "NNS" and inflect.singular_noun(subtree[0]):
-                result += first_letter_uppercase(inflect.singular_noun(subtree[0]))
-            else:
-                result += first_letter_uppercase(subtree[0])
-
-    return result
-
-
-def get_tree_words(tree: Tree) -> str:
-    """
-    Return the words of a tree node, eg:
-    (NP (DT a) (JJ specific) (NN flight)) -> "a specific flight"
-    """
-    return " ".join(tree.leaves())
-
-
 def get_synonyms(word: str) -> set:
     res = set()
     for syn in wordnet.synsets(word):
         for lm in syn.lemmas():
             res.add(lm.name())
     return res
-
-
-def is_attribute(noun: str) -> bool:
-    """
-    Return True if the noun is a common attribute.
-    """
-    noun = noun.lower()
-    common_attribute_parts = ["name", "number", "identifier", "date", "time", "string"]
-    for p in common_attribute_parts:
-        if p in noun:
-            return True
-    return noun.lower() in ["email", "id", "userid", "phone", "color"]
 
 
 def process_response_fallback(user_input: str) -> str:
@@ -314,27 +187,7 @@ def process_response_fallback(user_input: str) -> str:
     return return_error_to_user("Sorry, I could not process your request :(")
 
 
-
-def get_detected_keywords(user_input: str) -> Dict[str, str]:
-    """
-    Returns detected keywords used by Socio's rules.
-    """
-    user_input = user_input.lower()
-    result = {}
-
-    for w in ADD_WORDS:
-        if w in user_input:
-            result["ADD"] = w
-    for w in CONTAINS_WORDS:
-        if w in user_input:
-            result["CONTAIN"] = w
-    for w in HAVE_WORDS:
-        if w in user_input:
-            result["HAVE"] = w
-
-    return result
-
-
+# This function is kept here since it modifies the global state
 def add_class(class_name: str) -> str:
     global classes_created
     if class_name in classes_created:
@@ -343,83 +196,6 @@ def add_class(class_name: str) -> str:
     return add_class_json(class_name)
 
 
-def add_class_json(class_name: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "create_class"}],
-        "entities": [{"value": class_name}],
-        "output": {"text": [f"I created a class called {class_name}."]}
-    })
-
-
-def add_attribute(class_name: str, attribute_name: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "add_attribute"}],
-        "entities": [{"value": class_name}, {"value": attribute_name}],
-        "output": [{"text": f"{class_name} now has the attribute {attribute_name}."}]
-    })
-
-
-def create_composition(whole_class_name: str, part_class_name: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "create_composition"}],
-        "entities": [{"value": whole_class_name}, {"value": part_class_name}],
-        "output": {"text": [f"{whole_class_name} is now composed of {part_class_name}."]},
-        "context": {"varContainer": whole_class_name, "varPart": part_class_name}
-    })
-
-
-def create_association(class_name1: str, class_name2: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "create_association"}],
-        "entities": [{"value": class_name1}, {"value": class_name2}],
-        "output": [{"text": f"A {class_name1} has many {class_name2}s."}],
-    })
-
-
-def create_inheritance(child: str, parent: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "create_inheritance"}],
-        "entities": [{"value": child}, {"value": parent}],
-        "output": {"text": [f"{child} is a subclass of {parent}."]}
-    })
-
-
-def return_error_to_user(error_msg: str) -> str:
-    return json.dumps({
-        "intents": [{"intent": "return_error_to_user"}],
-        "output": {"text": error_msg}
-    })
-
-
 def reset_classes_created():
     global classes_created
     classes_created = []
-
-
-def first_letter_uppercase(user_input: str) -> str:
-    return user_input[0].upper() + user_input[1:]
-
-
-def first_letter_lowercase(user_input: str) -> str:
-    return user_input[0].lower() + user_input[1:]
-
-
-def strip_punctuation(s: str) -> str:
-    return s.translate(str.maketrans('', '', string.punctuation))
-
-
-def contains_one_of(user_input: str, targets: str) -> bool:
-    """
-    Return True if the input string contains any one of the targets.  
-    """
-    return any(w in user_input for w in targets)
-
-
-def get_DT_for_word(word) -> str:
-    if len(word) == 0:
-        return ""
-    word = word.lower()
-    if word[0] in ["a", "e", "i", "o", "u"]:
-        return "an"
-    else:
-        return "a"
