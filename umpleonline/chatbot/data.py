@@ -12,8 +12,9 @@ ADD_EXAMPLE_SENTENCES = ["Add person.", "Add work in person.", "Add numeric age 
 CONTAIN_EXAMPLE_SENTENCES = ["The house is made of rooms.", "Students contains a numeric identifier."]
 HAVE_EXAMPLE_SENTENCES = ["Bulky packages are characterized by their width, length and height.",
 	"Students have a numeric identifier.", "Medicines have an active ingredient."]
+ISA_EXAMPLE_SENTENCES = []
 
-ALL_SENTENCES = chain(ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES)
+ALL_SENTENCES = chain(ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ISA_EXAMPLE_SENTENCES)
 
 PARSE_TREES = [
     """(ROOT (S (VP (VB Add) (NP (NN person))) (. .)))""", 

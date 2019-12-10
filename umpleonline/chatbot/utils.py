@@ -1,7 +1,7 @@
 import string
 from typing import Dict
 
-from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS
+from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
 
 
 def first_letter_uppercase(user_input: str) -> str:
@@ -49,6 +49,9 @@ def get_detected_keywords(user_input: str) -> Dict[str, str]:
     for w in HAVE_WORDS:
         if w in user_input:
             result["HAVE"] = w
+    for w in ISA_WORDS:
+        if w in user_input:
+            result["ISA"] = w
 
     return result
 

@@ -7,7 +7,7 @@ from nltk.corpus import wordnet
 from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
     return_error_to_user)
 from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
-from parser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np
+from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np
 from utils import (first_letter_lowercase, first_letter_uppercase, contains_one_of, get_DT_for_word, is_attribute,
     get_detected_keywords, strip_punctuation)
 

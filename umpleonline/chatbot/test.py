@@ -14,8 +14,9 @@ from nltk.tree import Tree
 
 from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
     return_error_to_user)
-from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ALL_SENTENCES, PARSE_TREES)
-from parser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np, get_tree_words
+from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ISA_EXAMPLE_SENTENCES,
+    ALL_SENTENCES, PARSE_TREES)
+from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np, get_tree_words
 from processresponse import (process_response_baseline, handle_add_kw, handle_contain_kw, handle_have_kw,
     add_class, reset_classes_created)
 from utils import get_DT_for_word, get_detected_keywords, is_attribute
@@ -34,6 +35,9 @@ def test_get_detected_keywords():
         print(get_detected_keywords(s))
     for s in HAVE_EXAMPLE_SENTENCES:
         assert "HAVE" in get_detected_keywords(s)
+        print(get_detected_keywords(s))
+    for s in ISA_EXAMPLE_SENTENCES:
+        assert "ISA" in get_detected_keywords(s)
         print(get_detected_keywords(s))
 
 
