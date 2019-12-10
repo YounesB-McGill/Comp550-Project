@@ -38,9 +38,11 @@ def process_response_baseline(user_input: str) -> str:
         if "CONTAIN" in detected_keywords.keys() and "ISA" in detected_keywords.keys(): # "can consist of"
             return handle_contain_kw(message_text)
         else:
+            print("nk = 2", detected_keywords)
             return process_response_fallback(message_text)
     else:
         # TODO Handle more complex multiple keyword scenarios
+        print("nk =", nk, detected_keywords)
         return process_response_fallback(message_text)
 
 
@@ -55,8 +57,6 @@ def handle_add_kw(message_text: str) -> str:
         class_name = get_noun_from_np(nps[0])
         return add_class(class_name)
     elif n_st == 2:
-        for t in nps:
-            t.pretty_print()
         class_name = get_noun_from_np(nps[1])
         attribute_name = first_letter_lowercase(get_noun_from_np(nps[0]))
         return add_attribute(class_name, attribute_name)
@@ -151,7 +151,29 @@ def handle_isa_kw(message_text: str) -> str:
 
 
 def handle_no_kw(message_text: str) -> str:
-    # This will add an association if possible, otherwise it will create a class
+    """
+    Add an association if possible, otherwise create a class.
+    """
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        return add_class(class_name)
+    elif n_st == 2:
+        class1 = get_noun_from_np(nps[0])
+        class2 = get_noun_from_np(nps[1])
+
+        if class1 not in classes_created:
+            classes_created.append(class1)
+        if class2 not in classes_created:
+            classes_created.append(class2)  
+         
+        return create_association(class1, class2)
+
     return process_response_fallback(message_text)   
 
 

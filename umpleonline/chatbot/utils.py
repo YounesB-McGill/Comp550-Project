@@ -52,10 +52,12 @@ def get_detected_keywords(user_input: str) -> Dict[str, str]:
         if w in user_input:
             result["HAVE"] = w
     for w in ISA_WORDS:
-        if w == " serve" and w in user_input and " as " in user_input:
-            result["ISA"] = "serve"
-        elif w == " play" and w in user_input and " role" in user_input:
-            result["ISA"] = "play"
+        if w == " serve":
+            if w in user_input and " as " in user_input:
+                result["ISA"] = "serve"
+        elif w == " play":
+            if w in user_input and " role" in user_input:
+                result["ISA"] = "play"
         else:
             if w in user_input:
                 result["ISA"] = w
