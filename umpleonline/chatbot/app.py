@@ -36,6 +36,7 @@ def process_user_input():
 def setup_deps():
     nltk.download('averaged_perceptron_tagger')
     nltk.download('maxent_ne_chunker')
+    nltk.download("punkt")
     nltk.download('words')
 
 

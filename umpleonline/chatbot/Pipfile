@@ -12,6 +12,9 @@ flask = "*"
 flask-cors = "*"
 inflect = "*"
 pytest = "*"
+pandas = "*"
+sklearn = "*"
+keras = "*"
 
 [requires]
 python_version = "3.7"
