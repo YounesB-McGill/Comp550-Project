@@ -33,7 +33,7 @@ from nltk.corpus import wordnet
 import random
 
 # number of sentences per grammar
-NUMBER_OF_SENTENCES = 100
+NUMBER_OF_SENTENCES = 2000
 # word bank and grammars for each intent
 BASE_NOUNS = [  ]
 BASE_VERBS = [  ]
@@ -182,8 +182,25 @@ def datagen(operation, raw_grammar):
     print('---------------------------------------------------------------')
 
 
+def csv_gen(operation, raw_grammar):
+    '''Create the same data as above, but in csv format'''
+    output_file = f'{operation}.csv'
+
+    grammar = CFG.fromstring(raw_grammar)
+    all_sentences = [' '.join(sentence) for sentence in generate(grammar)]
+    sentences = random.sample(all_sentences, min(len(all_sentences), NUMBER_OF_SENTENCES))
+    sentences = list(map(lambda x : x + f',{operation}', sentences))
+
+    print(f'Selecting {NUMBER_OF_SENTENCES} out of {len(all_sentences)} generated sentences')
+    with open(output_file, 'w') as fd:
+        fd.writelines(f'\n'.join(sentences))
+    print(f'Output for operation {operation} written to {output_file}')
+    print('--------------------------------------------------------------')
+
+
 if __name__ == '__main__':
     init_glob()
     for key, value in GRAMMARS.items():
         datagen(key, value)
+        csv_gen(key, value)
 
