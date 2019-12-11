@@ -122,8 +122,8 @@ def init_glob():
             if len(hs) == 0:
                 continue
             h = hs[0]
-            sname = s.lemma_names()[0].replace('_',' ')
-            hname = h.lemma_names()[0].replace('_',' ')
+            sname = s.lemma_names()[0].replace('_',' ').replace("'",'')
+            hname = h.lemma_names()[0].replace('_',' ').replace("'",'')
             list_vd.append(f"'{hname}' V_D '{sname}'")
             list_vi.append(f"'{sname}' V_I '{hname}'")
     rule = "S_D -> " + ' | '.join(list_vd) + "\n"
@@ -149,8 +149,8 @@ def init_glob():
             if len(hs) == 0:
                 continue
             h = hs[0]
-            sname = s.lemma_names()[0].replace('_',' ')
-            hname = h.lemma_names()[0].replace('_',' ')
+            sname = s.lemma_names()[0].replace('_',' ').replace("'",'')
+            hname = h.lemma_names()[0].replace('_',' ').replace("'",'')
             list_isa.append(f"'{sname}' V1 '{hname}'")
             list_risa.append(f"'{hname}' V2 '{sname}'")
     rule = "S_1 -> " + ' | '.join(list_isa) + "\n"
@@ -178,6 +178,7 @@ def datagen(operation, raw_grammar):
     #print(operation, grammar, sep=': ')
     with open(output_file, 'w') as fd:
         fd.writelines('\n'.join(sentences))
+        fd.write('\n')
     print(f'Output for operation {operation} written to {output_file}')
     print('---------------------------------------------------------------')
 
@@ -194,6 +195,7 @@ def csv_gen(operation, raw_grammar):
     print(f'Selecting {NUMBER_OF_SENTENCES} out of {len(all_sentences)} generated sentences')
     with open(output_file, 'w') as fd:
         fd.writelines(f'\n'.join(sentences))
+        fd.write('\n')
     print(f'Output for operation {operation} written to {output_file}')
     print('--------------------------------------------------------------')
 
@@ -201,6 +203,6 @@ def csv_gen(operation, raw_grammar):
 if __name__ == '__main__':
     init_glob()
     for key, value in GRAMMARS.items():
-        datagen(key, value)
+        #datagen(key, value)
         csv_gen(key, value)
 
