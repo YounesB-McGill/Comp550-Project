@@ -59,3 +59,8 @@ umpleonline/watson/\.env
 *.pyc
 
 Umplificator/
+
+umpleonline/chatbot/stanford-corenlp-full-2018-10-05/
+
+
+umpleonline/chatbot/Pipfile.lock
