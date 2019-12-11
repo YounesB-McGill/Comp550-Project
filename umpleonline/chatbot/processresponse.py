@@ -1,41 +1,29 @@
 #!/usr/bin/python3
-import json
 import re
+from typing import List
 
-from nltk import word_tokenize, ne_chunk, pos_tag
-from nltk import RegexpParser
-from nltk.corpus import wordnet
-from typing import Dict
-
-
-# this needs to move to wherever the add rule is defined
-ADD_WORDS = ["add", "create", "make"]
-CONTAINS_WORDS = ["contain", "made of", "made up of", "made from", "compose", "include", "consist"]
-HAVE_WORDS = ["hav", "has", "characteri", "identif", "recogni"]
-NP_GRAMMAR = r"""
-    NP: {<DT|PP\$>?<JJ>*<NN>}
-        {<NNP>+}
-"""
-CP = RegexpParser(NP_GRAMMAR)
+from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
+    return_error_to_user)
+from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
+from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np
+from utils import (first_letter_lowercase, first_letter_uppercase, contains_one_of, get_DT_for_word, is_attribute,
+    get_detected_keywords, strip_punctuation)
 
 
-def process_response_baseline(user_input):
+classes_created = []  # Must keep track of this to avoid errors
+
+
+def process_response_baseline(user_input: str) -> str:
     """
     Function used to reply with a baseline response based on the Socio model.
     This function assumes valid input.
     """
-    
-    print("Processing request in debug mode")
-    message_text = user_input.lower()
-
-    # Also need to do NLTK chunking
-    #words = message_text.split(' ')
+    message_text = strip_punctuation(user_input.lower())
     detected_keywords = get_detected_keywords(message_text)
-
     nk = len(detected_keywords)
 
     if nk == 0:
-        return process_response_fallback(user_input)
+        return handle_no_kw(message_text)
     elif nk == 1:
         kw = list(detected_keywords.keys())[0]
         if kw == "ADD":
@@ -44,52 +32,156 @@ def process_response_baseline(user_input):
             return handle_contain_kw(message_text)
         elif kw == "HAVE":
             return handle_have_kw(message_text)
+        elif kw == "ISA":
+            return handle_isa_kw(message_text)
+    elif nk == 2:
+        if "CONTAIN" in detected_keywords.keys() and "ISA" in detected_keywords.keys(): # "can consist of"
+            return handle_contain_kw(message_text)
+        else:
+            print("nk = 2", detected_keywords)
+            return process_response_fallback(message_text)
     else:
-        # TODO Handle multiple keywords, eg "Students *contain*s a numeric *identif*ier"
-        pass
-
-
-def handle_add_kw(message_text):
-    # try:
-    #     chunks = get_chunks(message_text)
-    # except:
+        # TODO Handle more complex multiple keyword scenarios
+        print("nk =", nk, detected_keywords)
         return process_response_fallback(message_text)
 
 
-def handle_contain_kw(message_text):
+def handle_add_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st == 0:
+        kw = get_detected_keywords(message_text).get("ADD", "add")
+        return return_error_to_user(f"Please specify what you want to {kw}.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        return add_class(class_name)
+    elif n_st == 2:
+        class_name = get_noun_from_np(nps[1])
+        attribute_name = first_letter_lowercase(get_noun_from_np(nps[0]))
+        return add_attribute(class_name, attribute_name)
+    else:
+        return process_response_fallback(message_text)
+
+
+def handle_contain_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st < 2:
+        return return_error_to_user(
+            "I don't get what you meant. If you want to make a composition, specify the two classes.")
+    elif n_st == 2:
+        first_noun = get_noun_from_np(nps[0])
+        second_noun = get_noun_from_np(nps[1])
+
+        if first_noun not in classes_created:
+            classes_created.append(first_noun)
+
+        if is_attribute(get_noun_from_np(nps[1])):
+            return add_attribute(first_noun, first_letter_lowercase(second_noun))
+        else:
+            whole = first_noun
+            part = second_noun
+
+            if part not in classes_created:
+                classes_created.append(part)
+
+            return create_composition(whole, part)
+    else:
+        return process_response_fallback(message_text)
+
+
+def handle_have_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        if class_name in classes_created:
+            return return_error_to_user(f"What do want to specify about {class_name}?")
+        else:
+            dt = get_DT_for_word(class_name)
+            return return_error_to_user(f"Are trying to add a class? Try saying 'Create {dt} {class_name}.'")
+    else:
+        # TODO In the future, also allow multiple attributes ("Student has a name and email").
+        # This requires updating the website.
+        class_name = get_noun_from_np(nps[0])
+        second_noun = get_noun_from_np(nps[1])
+
+        if class_name in classes_created:
+            classes_created.append(class_name)
+
+        if is_attribute(second_noun):
+            return add_attribute(class_name, first_letter_lowercase(second_noun))
+        else:
+            if second_noun not in classes_created:
+                classes_created.append(second_noun)
+            return create_association(class_name, second_noun)
+
     return process_response_fallback(message_text)
 
 
-def handle_have_kw(message_text):
+def handle_isa_kw(message_text: str) -> str:
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st < 2:
+        return return_error_to_user("If you're trying to create an inheritance, clearly specify both classes.")
+    else:
+        if ((" serve" in message_text and " as " in message_text) or
+            (" play" in message_text and " role" in message_text)):
+            child = get_noun_from_np(nps[1])
+            parent = get_noun_from_np(nps[0])
+        else:
+            child = get_noun_from_np(nps[0])
+            parent = get_noun_from_np(nps[1])
+
+        if child not in classes_created:
+            classes_created.append(child)
+
+        if parent not in classes_created:
+            classes_created.append(parent)
+
+        return create_inheritance(child, parent)
+
     return process_response_fallback(message_text)
 
 
-"""
-def get_chunks(message_text):
-    single_words = ne_chunk(pos_tag(word_tokenize(message_text)))
-    print(single_words)
-    return single_words
-"""
+def handle_no_kw(message_text: str) -> str:
+    """
+    Add an association if possible, otherwise create a class.
+    """
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
 
-def get_chunks(message_text):
-    tagged_sentence = pos_tag(word_tokenize(message_text))
-    res = CP.parse(tagged_sentence)
-    print(res)
-    return res
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        return add_class(class_name)
+    elif n_st == 2:
+        class1 = get_noun_from_np(nps[0])
+        class2 = get_noun_from_np(nps[1])
+
+        if class1 not in classes_created:
+            classes_created.append(class1)
+        if class2 not in classes_created:
+            classes_created.append(class2)  
+         
+        return create_association(class1, class2)
+
+    return process_response_fallback(message_text)   
 
 
-def get_synonyms(word):
-    res = set()
-    for syn in wordnet.synsets(word):
-        for lm in syn.lemmas():
-            res.add(lm.name())
-    return res
-
-
-def process_response_fallback(user_input):
+def process_response_fallback(user_input: str) -> str:
     """
     Fallback method from Younes' undergrad project, to be used for the cases not handled by Socio's logic.
     """
+    print("Processing request in fallback mode")
     message_text = user_input.lower()
     words = message_text.split(' ')
 
@@ -142,81 +234,18 @@ def process_response_fallback(user_input):
         for i in range(len(words)):
             pass #if words[]
 
-    return "Error"
+    return return_error_to_user("Sorry, I could not process your request :(")
 
 
-
-def get_detected_keywords(user_input: str) -> Dict[str, str]:
-    """
-    Returns detected keywords used by Socio's rules.
-    """
-    user_input = user_input.lower()
-    result = {}
-
-    for w in ADD_WORDS:
-        if w in user_input:
-            result["ADD"] = w
-    for w in CONTAINS_WORDS:
-        if w in user_input:
-            result["CONTAIN"] = w
-    for w in HAVE_WORDS:
-        if w in user_input:
-            result["HAVE"] = w
-
-    return result
+# This function is kept here since it modifies the global state
+def add_class(class_name: str) -> str:
+    global classes_created
+    if class_name in classes_created:
+        return return_error_to_user(f"{class_name} is already created, so let's not make it again.")
+    
+    return add_class_json(class_name)
 
 
-def add_class(class_name):
-    return json.dumps({
-        "intents": [{"intent": "create_class"}],
-        "entities": [{"value": class_name}],
-        "output": {"text": [f"I created a class called {class_name}."]}
-    })
-
-
-def add_attribute(class_name, attribute_name):
-    return json.dumps({
-        "intents": [{"intent": "add_attribute"}],
-        "entities": [{"value": class_name}, {"value": attribute_name}],
-        "output": [{"text": f"{class_name} now has the attribute {attribute_name}."}]
-    })
-
-
-def create_composition(whole_class_name, part_class_name):
-    return json.dumps({
-        "intents": [{"intent": "create_composition"}],
-        "entities": [{"value": whole_class_name}, {"value": part_class_name}],
-        "output": {"text": [f"{whole_class_name} is now composed of {part_class_name}."]},
-        "context": {"varContainer": whole_class_name, "varPart": part_class_name}
-    })
-
-
-def create_association(class_name1, class_name2):
-    return json.dumps({
-        "intents": [{"intent": "create_association"}],
-        "entities": [{"value": class_name1}, {"value": class_name2}],
-        "output": [{"text": f"A {class_name1} has many {class_name2}s."}],
-    })
-
-
-def create_inheritance(child, parent):
-    return json.dumps({
-        "intents": [{"intent": "create_inheritance"}],
-        "entities": [{"value": child}, {"value": parent}],
-        "output": {"text": [f"{child} is a subclass of {parent}."]}
-    })
-
-def first_letter_uppercase(user_input):
-    return user_input[0].upper() + user_input[1:]
-
-
-def strip_punctuation(s):
-    return re.sub(r"/\s+/g", " ", re.sub(r"/[^\w\s]|_/g", "", s))
-
-
-def contains_one_of(user_input, targets):
-    """
-    Return True if the input string contains any one of the targets.  
-    """
-    return any(w in user_input for w in targets)
-
+def reset_classes_created():
+    global classes_created
+    classes_created = []
