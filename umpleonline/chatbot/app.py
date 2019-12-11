@@ -38,6 +38,7 @@ def setup_deps():
     nltk.download('maxent_ne_chunker')
     nltk.download("punkt")
     nltk.download('words')
+    nltk.download('wordnet')
 
 
 if __name__ == "__main__":
