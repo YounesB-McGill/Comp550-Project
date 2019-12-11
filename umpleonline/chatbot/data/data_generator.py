@@ -33,7 +33,7 @@ from nltk.corpus import wordnet
 import random
 
 # number of sentences per grammar
-NUMBER_OF_SENTENCES = 500
+NUMBER_OF_SENTENCES = 100
 # word bank and grammars for each intent
 BASE_NOUNS = [  ]
 BASE_VERBS = [  ]
@@ -42,7 +42,7 @@ ADD_CLASS_GRAMMAR = '''
     VP  -> V | V 'a class'
     NP  -> Det N | N
     Det -> 'a' | 'an' | 'the'
-    V   -> 'create' | 'add' | 'construct'
+    V   -> 'create' | 'add' | 'construct' | 'make'
 '''
 ADD_ATTRIBUTE_GRAMMAR = '''
     S   -> QR | DS
@@ -51,18 +51,16 @@ ADD_ATTRIBUTE_GRAMMAR = '''
     VP1 -> V1 NP1
     VP2 -> V2 NP1
     V1  -> 'add'
-    V2  -> 'has' | 'contains'
-    NP1 -> Det JJ 'attribute' N1 | 'an attribute' N1
+    V2  -> 'has' | 'contains' | 'is identified by' | 'is characterized by'
+    NP1 -> Det JJ 'attribute' N1 | Det JJ N1 | Det N1
     JJ  -> 'text' | 'numeric' | 'boolean' | 'binary'
     Det -> 'a' | 'an' | 'the'
     N1  -> 'id' | 'name' | 'age' | 'value' | 'count' | 'number' | 'state'
 '''
 CREATE_COMPOSITION_GRAMMAR = '''
-    S   -> NP1 V_D NP2 | NP2 V_I NP1
+    S   -> S_D | S_I
     V_D -> 'contains' | 'has' | 'consists of' | 'is composed of'
-    V_I -> 'is part of' | 'are part of' | 'is in' | 'constitutes'
-    NP1 -> Det N1 | N1
-    NP2 -> Det N2 | N2
+    V_I -> 'is part of' | 'are part of' | 'is in' | 'constitutes' | 'make up'
 '''
 CREATE_ASSOCIATION_GRAMMAR = '''
     S   -> NP VP
@@ -71,11 +69,9 @@ CREATE_ASSOCIATION_GRAMMAR = '''
     Det -> 'a' | 'an' | 'the'
 '''
 CREATE_INHERITANCE_GRAMMAR = '''
-    S   -> NP1 V1 NP2 | NP2 V2 NP1
-    V1  -> 'is'
-    V2  -> 'can be'
-    NP1 -> Det N1 | N1
-    NP2 -> Det N2 | N2
+    S   -> S_1 | S_2
+    V1  -> 'is' | 'is a'
+    V2  -> 'can be' | 'can be a'
 '''
 GRAMMARS = {  }
 
@@ -104,24 +100,34 @@ def init_glob():
 
     # add some more terminals for each of the grammar
     # grammar for add class
-    list_of_nouns = random.sample(BASE_NOUNS, 50)
+    list_of_nouns = random.sample(BASE_NOUNS, 500)
     noun_terminals = create_terminals(list_of_nouns)
     rule = f'N -> {noun_terminals}'
     ADD_CLASS_GRAMMAR += rule
 
     # grammar for add attribute
     list_of_nouns = random.sample(BASE_NOUNS, 50)
-    noun_terminals = ' | '.join([f"'{noun}'" for noun in list_of_nouns])
     noun_terminals = create_terminals(list_of_nouns)
     rule = f'N2 -> {noun_terminals}'
     ADD_ATTRIBUTE_GRAMMAR += rule
 
     # grammar for create composition
-    list_of_nouns = random.sample(BASE_NOUNS, 50)
-    l1,l2 = list_of_nouns[:25], list_of_nouns[25:]
-    t1 = create_terminals(l1)
-    t2 = create_terminals(l2)
-    rule = f'N1 -> {t1}\nN2 -> {t2}'
+    list_of_nouns = random.sample(BASE_NOUNS, 500)
+    list_vd = []
+    list_vi = []
+    for noun in list_of_nouns:
+        synonyms = wordnet.synsets(noun, pos='n')
+        for s in synonyms:
+            hs = s.part_holonyms()
+            if len(hs) == 0:
+                continue
+            h = hs[0]
+            sname = s.lemma_names()[0].replace('_',' ')
+            hname = h.lemma_names()[0].replace('_',' ')
+            list_vd.append(f"'{hname}' V_D '{sname}'")
+            list_vi.append(f"'{sname}' V_I '{hname}'")
+    rule = "S_D -> " + ' | '.join(list_vd) + "\n"
+    rule += "S_I -> " + ' | '.join(list_vi) + "\n"
     CREATE_COMPOSITION_GRAMMAR += rule
 
     # grammar for create association
@@ -133,20 +139,22 @@ def init_glob():
     CREATE_ASSOCIATION_GRAMMAR += rule
 
     # grammar for create inheritance
-    list_of_nouns = random.sample(BASE_NOUNS, 50)
-    t1 = create_terminals(list_of_nouns)
-    list_of_hypernyms = []
+    list_of_nouns = random.sample(BASE_NOUNS, 500)
+    list_isa = []
+    list_risa = []
     for noun in list_of_nouns:
-        synonyms = wordnet.synsets(noun)[:2]
-        hypernyms = []
+        synonyms = wordnet.synsets(noun, pos='n')
         for s in synonyms:
-            for h in s.hypernyms():
-                if '_' in h.name():
-                    continue
-                hypernyms.append(h.name().partition('.')[0])
-        list_of_hypernyms += hypernyms
-    t2 = create_terminals(list_of_hypernyms)
-    rule = f'N1 -> {t1}\nN2 -> {t2}'
+            hs = s.hypernyms()
+            if len(hs) == 0:
+                continue
+            h = hs[0]
+            sname = s.lemma_names()[0].replace('_',' ')
+            hname = h.lemma_names()[0].replace('_',' ')
+            list_isa.append(f"'{sname}' V1 '{hname}'")
+            list_risa.append(f"'{hname}' V2 '{sname}'")
+    rule = "S_1 -> " + ' | '.join(list_isa) + "\n"
+    rule += "S_2 -> " + ' | '.join(list_risa) + "\n"
     CREATE_INHERITANCE_GRAMMAR += rule
 
     GRAMMARS = {
@@ -166,6 +174,7 @@ def datagen(operation, raw_grammar):
     all_sentences = [' '.join(sentence) for sentence in generate(grammar)]
     sentences = random.sample(all_sentences, min(len(all_sentences), NUMBER_OF_SENTENCES))
 
+    print(f'Selecting {NUMBER_OF_SENTENCES} out of {len(all_sentences)} generated sentences')
     #print(operation, grammar, sep=': ')
     with open(output_file, 'w') as fd:
         fd.writelines('\n'.join(sentences))
