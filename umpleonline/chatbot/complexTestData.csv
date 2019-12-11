@@ -1,0 +1,36 @@
+﻿create a school,add_class
+create a playing card,add_class
+create an alumni,add_class
+make a lose turn action card,add_class
+Add work in person.,add_attribute
+Add numeric age in person,add_attribute
+The house is made of rooms,create_composition
+A car contains wheels,create_composition
+A car is composed of tires.,create_composition
+A specific conference consists of a program committee.,create_composition
+Students contains a numeric identifier,add_attribute
+A student has an email,add_attribute
+A student is identified by their email,add_attribute
+students are characterized by their names.,add_attribute
+vehicles are identified by a vehicle identifier number,add_attribute
+Each tournament has a date when it is played.,add_attribute
+"People registered are identified by their phone, which is unique",add_attribute
+People have addresses,create_association
+A customer has one or more bank accounts.,create_association
+Students can have one or two majors.,create_association
+"Tileo is characterized by playing cards, each with a color.",create_association
+A student is a person.,create_inheritance
+Students are people.,create_inheritance
+A specific flight is a flight.,create_inheritance
+Triangles are a type of shape.,create_inheritance
+Circles are kinds of shapes.,create_inheritance
+Some employees play roles as supervisors.,create_inheritance
+A lion may be considered as a giant cat,create_inheritance
+A tiger may also be considered a kind of giant cat.,create_inheritance
+A teleport action card is a playing card.,create_inheritance
+Players can serve as defenders.,create_inheritance
+Some teaching assistants also play the role of graders.,create_inheritance
+Customers get hungry if not fed.,add_class
+A bus transportation management system is used to help organize.,add_class
+Students passed exams.,create_association
+Checks get sent to the bank.,create_association
