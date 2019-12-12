@@ -61,11 +61,10 @@ def create_model(vocabSizez, maxLen, input_shape):
     model = Sequential()
     model.add(Embedding(vocabSizez, 128))
     model.add(Bidirectional(LSTM(128)))
-    #model.add(Dense(128, activation = "relu"))
-    #model.add(Dropout(0.5))
+    model.add(Dense(128, activation = "relu"))
+    model.add(Dropout(0.5))
     model.add(Dense(64, activation = "relu"))
     model.add(Dropout(0.5))
-
     model.add(Dense(32, activation = "relu"))
     model.add(Dropout(0.5))
     model.add(Dense(5, activation = "softmax"))
