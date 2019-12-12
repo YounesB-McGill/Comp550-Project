@@ -19,11 +19,6 @@ from sklearn.preprocessing import OneHotEncoder
 
 TEST_SIZE = 0.15
 
-#sentences = 'lol'
-#to merge csv files, use
-#copy *.csv merged.csv
-
-
 def clean(sentences):
     wordList = []
     for i in sentences:
@@ -109,24 +104,11 @@ if __name__ == "__main__":
     keyIntent = list(set(intent))
     sentences = list(dataSet["Sentence"])
 
-    """
-    Sentence         Intent
-    0  add the binary attribute state to lumber  add_attribute
-    1    add an boolean attribute number to pie  add_attribute
-    2      add a numeric attribute value to dog  add_attribute
-    3      add a boolean attribute id to belief  add_attribute
-    4  ghost contains a numeric attribute count  add_attribute
-    """
-
     cleanedSetences = clean(sentences)
     wordTokens = tokens(cleanedSetences)
 
     vocabSize = len(wordTokens.word_index) + 1
     maxLengthz = maxLength(cleanedSetences)
-
-    """
-    Vocab Size = 365 and Maximum length = 8
-    """
 
     encodedSentences = encoder(wordTokens, cleanedSetences)
 
@@ -144,58 +126,13 @@ if __name__ == "__main__":
     model = create_model(vocabSize, maxLengthz, input_shape)
     model.summary()
     model.compile(loss = "categorical_crossentropy", optimizer = "adam", metrics = ["accuracy"])
-    #model.summary()
 
     modelFileName = 'modelLSTM.h5'
 
-    # These take a long time
+    #These take a long time
     #checkpoint = ModelCheckpoint(modelFileName, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
     #hist = model.fit(xTrain, yTrain, epochs = 150, batch_size = 32, validation_data = (xValid, yValid), callbacks = [checkpoint])
     #model.save(modelFileName)
-
-    """
-    (2121, 8)
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    embedding_21 (Embedding)     (None, None, 128)         46720     
-    _________________________________________________________________
-    bidirectional_5 (Bidirection (None, 256)               263168    
-    _________________________________________________________________
-    dense_82 (Dense)             (None, 64)                16448     
-    _________________________________________________________________
-    dropout_60 (Dropout)         (None, 64)                0         
-    _________________________________________________________________
-    dense_83 (Dense)             (None, 32)                2080      
-    _________________________________________________________________
-    dropout_61 (Dropout)         (None, 32)                0         
-    _________________________________________________________________
-    dense_84 (Dense)             (None, 5)                 165       
-    =================================================================
-    Total params: 328,581
-    Trainable params: 328,581
-    Non-trainable params: 0
-    _________________________________________________________________
-    Train on 2121 samples, validate on 375 samples
-    Epoch 1/150
-    2121/2121 [==============================] - 6s 3ms/step - loss: 1.2152 - acc: 0.4781 - val_loss: 0.3357 - val_acc: 0.9813
-
-    Epoch 00001: val_loss improved from inf to 0.33572, saving model to modelLSTM.h5
-    Epoch 2/150
-    2121/2121 [==============================] - 2s 774us/step - loss: 0.2965 - acc: 0.8878 - val_loss: 0.0029 - val_acc: 1.0000
-
-    Epoch 00002: val_loss improved from 0.33572 to 0.00293, saving model to modelLSTM.h5
-    Epoch 3/150
-    2121/2121 [==============================] - 1s 575us/step - loss: 0.1024 - acc: 0.9642 - val_loss: 1.8908e-04 - val_acc: 1.0000
-
-    Epoch 00003: val_loss improved from 0.00293 to 0.00019, saving model to modelLSTM.h5
-    Epoch 4/150
-    2121/2121 [==============================] - 1s 582us/step - loss: 0.0659 - acc: 0.9755 - val_loss: 3.6352e-05 - val_acc: 1.0000
-
-    [...]
-
-    Epoch 00150: val_loss did not improve from 0.00000
-    """
 
     model = load_model('modelLSTM.h5')
 
