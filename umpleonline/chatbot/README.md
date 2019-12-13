@@ -17,7 +17,7 @@ Skip the first two instructions if you do not want to run the web application.
     ant -DshouldPackageUmpleOnline=true -Dmyenv=local -f build.umple.xml packageUmpleonline
     ```
 
-3. Install all Python dependecies using `pipenv install`.
+3. Install all Python dependencies using `pipenv install`.
 
 4. Install the latest Stanford NLP server, and place the unzipped files, including the English model JARs, in `umpleonline/chatbot/stanford-corenlp-full-2018-10-05/`.
 
@@ -29,3 +29,8 @@ Open a terminal window and `./run_stanford_nlp`. Execute the tests in `test.py` 
 ### Running the website
 Open two more terminal windows. In the first, `./run_umple_online` and in the second, `./run_chatbot`.
 Go to [localhost:8001/umple.php](http://localhost:8001/umple.php) using your browser and chat with the bot.
+
+This is a preview of what the web application looks like if everything is running correctly:
+
+<img src="chatbot.png">
+
