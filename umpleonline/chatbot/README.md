@@ -5,6 +5,16 @@ Younes Boubekeur, Anmoljeet Gill, Trung Vuong Thien
 
 This project uses [Umple](http://umple.org/), developed at the University of Ottawa, as a modeling tool and API.
 
+# Relevant course concepts
+
+- Classification
+- Part-of-Speech tagging and constituency detection
+- Lexical and distributional semantics
+- Context-Free Grammars
+- Neural Networks and Long Short-Term Memory Networks
+- Natural Language Generation
+ 
+
 ## Setup Instructions
 
 Skip the first two instructions if you do not want to run the web application.
