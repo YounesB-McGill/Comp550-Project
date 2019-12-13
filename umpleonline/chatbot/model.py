@@ -17,11 +17,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
 
+# This file was originally written as a Jupyter notebook.
+
+MODEL_FILE = "model/modelLSTM.h5"
+CSV_FILE = "data/dataset.csv"
 TEST_SIZE = 0.15
 
-#sentences = 'lol'
-#to merge csv files, use
-#copy *.csv merged.csv
+dataSet = pd.read_csv(CSV_FILE, encoding="latin1", names=["Sentence", "Intent"])
+intent = dataSet["Intent"]
+keyIntent = list(set(intent))
+
+intent = dataSet["Intent"]
+keyIntent = list(set(intent))
+sentences = list(dataSet["Sentence"])
 
 
 def clean(sentences):
@@ -33,14 +41,30 @@ def clean(sentences):
     return wordList
 
 
+cleanedSentences = clean(sentences)
+
+
 def tokens(words, filters = '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~'):
     token = Tokenizer(filters = filters)
     token.fit_on_texts(words)
     return token
 
 
+wordTokens = tokens(cleanedSentences)
+
+
+vocabSize = len(wordTokens.word_index) + 1
+
+
+"""
+Vocab Size = 365 and Maximum length = 8
+"""
+
 def maxLength(words):
     return(len(max(words, key = len)))
+
+
+maxLengths = maxLength(cleanedSentences)
 
 
 def encoder(tokens, words):
@@ -48,7 +72,7 @@ def encoder(tokens, words):
 
 
 def padder(words, maxLen):
-    return(pad_sequences(words, maxlen = maxLengthz, padding = "post"))
+    return(pad_sequences(words, maxlen = maxLengths, padding = "post"))
 
 
 def oneHotEncoder(encode):
@@ -61,8 +85,6 @@ def create_model(vocabSizez, maxLen, input_shape):
     model = Sequential()
     model.add(Embedding(vocabSizez, 128))
     model.add(Bidirectional(LSTM(128)))
-    #model.add(Dense(128, activation = "relu"))
-    #model.add(Dropout(0.5))
     model.add(Dense(64, activation = "relu"))
     model.add(Dropout(0.5))
 
@@ -71,6 +93,9 @@ def create_model(vocabSizez, maxLen, input_shape):
     model.add(Dense(5, activation = "softmax"))
   
     return model
+
+
+model = load_model(MODEL_FILE)
 
 
 def predict(text):
@@ -84,7 +109,7 @@ def predict(text):
         testTokens = list(filter(None, testTokens))
     
     testTokens = np.array(testTokens).reshape(1, len(testTokens))
-    x = padder(testTokens, maxLengthz)
+    x = padder(testTokens, maxLengths)
     pred = model.predict_proba(x)
   
     return pred
@@ -104,34 +129,10 @@ def getIntent(predicts, intents):
 
 
 if __name__ == "__main__":
-    dataSet = pd.read_csv('merged.csv', encoding = "latin1", names = ["Sentence", "Intent"])
-    print(dataSet.head())
-    intent = dataSet["Intent"]
-    keyIntent = list(set(intent))
-    sentences = list(dataSet["Sentence"])
 
-    """
-    Sentence         Intent
-    0  add the binary attribute state to lumber  add_attribute
-    1    add an boolean attribute number to pie  add_attribute
-    2      add a numeric attribute value to dog  add_attribute
-    3      add a boolean attribute id to belief  add_attribute
-    4  ghost contains a numeric attribute count  add_attribute
-    """
+    encodedSentences = encoder(wordTokens, cleanedSentences)
 
-    cleanedSetences = clean(sentences)
-    wordTokens = tokens(cleanedSetences)
-
-    vocabSize = len(wordTokens.word_index) + 1
-    maxLengthz = maxLength(cleanedSetences)
-
-    """
-    Vocab Size = 365 and Maximum length = 8
-    """
-
-    encodedSentences = encoder(wordTokens, cleanedSetences)
-
-    paddedSentences = padder(encodedSentences, maxLengthz)
+    paddedSentences = padder(encodedSentences, maxLengths)
 
     intentTokens = tokens(keyIntent, filters='!"#$%&()*+,-/:;<=>?@[\]^`{|}~')
     tokenOutput = encoder(intentTokens, intent)
@@ -142,19 +143,21 @@ if __name__ == "__main__":
 
     input_shape = xTrain.shape
     print(input_shape)
-    model = create_model(vocabSize, maxLengthz, input_shape)
+    model = create_model(vocabSize, maxLengths, input_shape)
     model.summary()
     model.compile(loss = "categorical_crossentropy", optimizer = "adam", metrics = ["accuracy"])
-    #model.summary()
+    model.summary()
 
     modelFileName = 'modelLSTM.h5'
 
-    # These take a long time
-    #checkpoint = ModelCheckpoint(modelFileName, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-    #hist = model.fit(xTrain, yTrain, epochs = 150, batch_size = 32, validation_data = (xValid, yValid), callbacks = [checkpoint])
-    #model.save(modelFileName)
+    # This operation take a long time (~2h on Anmojeet's machine)
+    checkpoint = ModelCheckpoint(modelFileName, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    hist = model.fit(xTrain, yTrain, epochs = 150, batch_size = 32, validation_data = (xValid, yValid), callbacks = [checkpoint])
+    model.save(modelFileName)
 
     """
+    Sample training output:
+
     (2121, 8)
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
@@ -198,13 +201,13 @@ if __name__ == "__main__":
     Epoch 00150: val_loss did not improve from 0.00000
     """
 
-    model = load_model('modelLSTM.h5')
-
     text = "wire is vessel"
     pred = predict(text)
     print(getIntent(pred, keyIntent))
 
     """
+    Sample output:
+    
     ['wire', 'is', 'vessel']
     create_inheritance has confidence = 1.0
     add_attribute has confidence = 0.0

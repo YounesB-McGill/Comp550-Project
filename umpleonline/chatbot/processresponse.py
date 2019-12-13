@@ -2,9 +2,13 @@
 import re
 from typing import List
 
+import numpy as np
+from keras.models import load_model
+
 from action import (add_class_json, add_attribute, create_association, create_inheritance, create_composition,
     return_error_to_user)
 from data import ADD_WORDS, CONTAINS_WORDS, HAVE_WORDS, ISA_WORDS
+from model import predict, getIntent, keyIntent
 from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np
 from utils import (first_letter_lowercase, first_letter_uppercase, contains_one_of, get_DT_for_word, is_attribute,
     get_detected_keywords, strip_punctuation)
@@ -13,11 +17,94 @@ from utils import (first_letter_lowercase, first_letter_uppercase, contains_one_
 classes_created = []  # Must keep track of this to avoid errors
 
 
+def process_response_model(user_input: str) -> str:
+    message_text = strip_punctuation(user_input.lower())
+
+    intent = get_intent(predict(user_input))
+
+    if intent == "add_class":
+        return add_class_action(message_text)
+    elif intent == "add_attribute":
+        return add_attribute_action(message_text)
+    elif intent == "create_composition":
+        return make_composition(message_text)
+    elif intent == "create_association":
+        return make_association(message_text)
+    elif intent == "create_inheritance":
+        return make_inheritance(message_text)
+    else:
+        return process_response_baseline(user_input)
+
+
+# The following three functions call into the same NP parser as the baseline, once the intent is determined.
+def add_class_action(message_text):
+    return handle_add_kw(message_text)
+
+
+def make_composition(message_text):
+    return handle_contain_kw(message_text)
+
+
+def make_inheritance(message_text):
+    return handle_isa_kw(message_text)
+
+
+# Since handle_have_kw tries to guess whether it needs to add an attribute (A student has a name) or an association
+# (A student has an address), the logic for the following two functions needs to be specified separately.
+def add_attribute_action(message_text):
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        if class_name in classes_created:
+            return return_error_to_user(f"What do want to specify about {class_name}?")
+        else:
+            dt = get_DT_for_word(class_name)
+            return return_error_to_user(f"Are trying to add a class? Try saying 'Create {dt} {class_name}.'")
+    else:
+        class_name = get_noun_from_np(nps[0])
+        attribute_name = first_letter_lowercase(get_noun_from_np(nps[1]))
+
+        if class_name in classes_created:
+            classes_created.append(class_name)
+
+        return add_attribute(class_name, attribute_name)
+
+
+def make_association(message_text):
+    chunks = get_chunks(message_text)
+    nps = get_NP_subtrees(chunks)
+    n_st = get_num_nonnested_NP_subtrees(chunks)
+    if n_st == 0:
+        return return_error_to_user("I really don't understand what you meant. Please rephrase.")
+    elif n_st == 1:
+        class_name = get_noun_from_np(nps[0])
+        if class_name in classes_created:
+            return return_error_to_user(f"What do want to specify about {class_name}?")
+        else:
+            dt = get_DT_for_word(class_name)
+            return return_error_to_user(f"Are trying to add a class? Try saying 'Create {dt} {class_name}.'")
+    else:
+        class1 = get_noun_from_np(nps[0])
+        class2 = get_noun_from_np(nps[1])
+
+        if class1 in classes_created:
+            classes_created.append(class1)
+        if class2 not in classes_created:
+            classes_created.append(class2)
+
+        return create_association(class1, class2)
+
+
 def process_response_baseline(user_input: str) -> str:
     """
     Function used to reply with a baseline response based on the Socio model.
     This function assumes valid input.
     """
+    print("Processing message in baseline mode.")
     message_text = strip_punctuation(user_input.lower())
     detected_keywords = get_detected_keywords(message_text)
     nk = len(detected_keywords)
@@ -174,7 +261,7 @@ def handle_no_kw(message_text: str) -> str:
          
         return create_association(class1, class2)
 
-    return process_response_fallback(message_text)   
+    return process_response_fallback(message_text)
 
 
 def process_response_fallback(user_input: str) -> str:
@@ -229,15 +316,21 @@ def process_response_fallback(user_input: str) -> str:
                 parent = first_letter_uppercase(strip_punctuation(words[i + 2]))
                 return create_inheritance(child, parent)
 
-    # Debug WordNet synonyms
-    if "synonym of" in message_text:
-        for i in range(len(words)):
-            pass #if words[]
-
     return return_error_to_user("Sorry, I could not process your request :(")
 
 
-# This function is kept here since it modifies the global state
+def get_intent(predicts):
+    prediction = predicts[0]
+ 
+    intents = np.array(keyIntent)
+    ids = np.argsort(-prediction)
+    intents = intents[ids]
+    predictions = -np.sort(-prediction)
+ 
+    return intents[np.argmax(predictions)]
+
+
+# These functions are kept here since they modify the global state
 def add_class(class_name: str) -> str:
     global classes_created
     if class_name in classes_created:

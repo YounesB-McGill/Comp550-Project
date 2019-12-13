@@ -6,7 +6,10 @@ in the umpleonline/chatbot directory.
 
 Tests marked with * are ones that pass with our system but fail with Socio. 
 """
+import json
 from itertools import chain
+from random import shuffle
+from typing import List, Tuple
 
 import nltk
 import pytest
@@ -17,14 +20,19 @@ from action import (add_class_json, add_attribute, create_association, create_in
 from data import (ADD_EXAMPLE_SENTENCES, CONTAIN_EXAMPLE_SENTENCES, HAVE_EXAMPLE_SENTENCES, ISA_EXAMPLE_SENTENCES,
     ALL_SENTENCES, PARSE_TREES)
 from npparser import get_chunks, get_NP_subtrees, get_num_nonnested_NP_subtrees, get_noun_from_np, get_tree_words
-from processresponse import (process_response_baseline, handle_add_kw, handle_contain_kw, handle_have_kw,
-    handle_isa_kw, handle_no_kw, add_class, reset_classes_created)
+from processresponse import (process_response_baseline, process_response_model, process_response_fallback, handle_add_kw,
+    handle_contain_kw, handle_have_kw, handle_isa_kw, handle_no_kw, add_class, reset_classes_created)
 from utils import get_DT_for_word, get_detected_keywords, is_attribute
+
+
+TEST_DATA_PATH = "data/dataset.csv"
 
 
 def setup_deps():
     nltk.download('averaged_perceptron_tagger')
     nltk.download('maxent_ne_chunker')
+    nltk.download("punkt")
+    nltk.download('wordnet')
     nltk.download('words')
 
 

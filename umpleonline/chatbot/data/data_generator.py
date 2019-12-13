@@ -27,10 +27,12 @@ type of operation:
     Students and teachers are human.
 """
 
+import random
+from random import randint
+
 from nltk.parse.generate import generate
 from nltk import CFG
 from nltk.corpus import wordnet
-import random
 
 # number of sentences per grammar
 NUMBER_OF_SENTENCES = 2000
@@ -39,7 +41,7 @@ BASE_NOUNS = [  ]
 BASE_VERBS = [  ]
 ADD_CLASS_GRAMMAR = '''
     S   -> VP NP
-    VP  -> V | V 'a class'
+    VP  -> V
     NP  -> Det N | N
     Det -> 'a' | 'an' | 'the'
     V   -> 'create' | 'add' | 'construct' | 'make'
@@ -52,7 +54,7 @@ ADD_ATTRIBUTE_GRAMMAR = '''
     VP2 -> V2 NP1
     V1  -> 'add'
     V2  -> 'has' | 'contains' | 'is identified by' | 'is characterized by'
-    NP1 -> Det JJ 'attribute' N1 | Det JJ N1 | Det N1
+    NP1 -> Det JJ N1 | Det N1
     JJ  -> 'text' | 'numeric' | 'boolean' | 'binary'
     Det -> 'a' | 'an' | 'the'
     N1  -> 'id' | 'name' | 'age' | 'value' | 'count' | 'number' | 'state'
@@ -171,7 +173,8 @@ def datagen(operation, raw_grammar):
     output_file = f'{operation}.grammar'
 
     grammar = CFG.fromstring(raw_grammar)
-    all_sentences = [' '.join(sentence) for sentence in generate(grammar)]
+    all_sentences = [' '.join(sentence) for sentence in generate(grammar, n=10000)]
+
     sentences = random.sample(all_sentences, min(len(all_sentences), NUMBER_OF_SENTENCES))
 
     print(f'Selecting {NUMBER_OF_SENTENCES} out of {len(all_sentences)} generated sentences')
@@ -188,7 +191,15 @@ def csv_gen(operation, raw_grammar):
     output_file = f'{operation}.csv'
 
     grammar = CFG.fromstring(raw_grammar)
-    all_sentences = [' '.join(sentence) for sentence in generate(grammar)]
+    all_sentences = [' '.join(sentence) for sentence in generate(grammar)
+                     if "attribute " not in sentence and "class " not in sentence]
+
+
+    # for s in all_sentences:
+    #     if "attribute" in s or "class" in s:
+    #         #if randint(0, 97) % 97 != 0:
+    #         all_sentences.remove(s)
+
     sentences = random.sample(all_sentences, min(len(all_sentences), NUMBER_OF_SENTENCES))
     sentences = list(map(lambda x : x + f',{operation}', sentences))
 
