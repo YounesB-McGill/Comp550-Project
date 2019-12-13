@@ -29,7 +29,7 @@ Skip the first two instructions if you do not want to run the web application.
 
 3. Install all Python dependencies using `pipenv install`.
 
-4. Install the latest Stanford NLP server, and place the unzipped files, including the English model JARs, in `umpleonline/chatbot/stanford-corenlp-full-2018-10-05/`.
+4. Download the latest [Stanford NLP server](https://stanfordnlp.github.io/CoreNLP/), and place the unzipped files, including the English model JARs, in `umpleonline/chatbot/stanford-corenlp-full-2018-10-05/`.
 
 ## Running the app
 
